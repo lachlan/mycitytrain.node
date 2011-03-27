@@ -1,0 +1,75 @@
+/* start basic spinner styles*/
+.spinner {
+position: relative;
+width: 20px;
+height: 20px;
+display: inline-block;
+}
+.spinner .bar {
+width: 12%;
+height: 26%;
+background: #000;
+position: absolute;
+left: 44.5%;
+top: 37%;
+opacity: 0;
+-webkit-animation: fade 1s linear infinite;
+-webkit-border-radius: 50px;
+-webkit-box-shadow: 0 0 3px rgba(0,0,0,0.2);
+}
+.spinner .bar.p1 {
+-webkit-transform: rotate(0deg) translate(0, -142%);
+-webkit-animation-delay: 0s;
+}
+.spinner .bar.p2 {
+-webkit-transform: rotate(30deg) translate(0, -142%);
+-webkit-animation-delay: -0.9167s;
+}
+.spinner .bar.p3 {
+-webkit-transform: rotate(60deg) translate(0, -142%);
+-webkit-animation-delay: -0.833s;
+}
+.spinner .bar.p4 {
+-webkit-transform: rotate(90deg) translate(0, -142%);
+-webkit-animation-delay: -0.75s;
+}
+.spinner .bar.p5 {
+-webkit-transform: rotate(120deg) translate(0, -142%);
+-webkit-animation-delay: -0.667s;
+}
+.spinner .bar.p6 {
+-webkit-transform: rotate(150deg) translate(0, -142%);
+-webkit-animation-delay: -0.5833s;
+}
+.spinner .bar.p7 {
+-webkit-transform: rotate(180deg) translate(0, -142%);
+-webkit-animation-delay: -0.5s;
+}
+.spinner .bar.p8 {
+-webkit-transform: rotate(210deg) translate(0, -142%);
+-webkit-animation-delay: -0.41667s;
+}
+.spinner .bar.p9 {
+-webkit-transform: rotate(240deg) translate(0, -142%);
+-webkit-animation-delay: -0.333s;
+}
+.spinner .bar.p10 {
+-webkit-transform: rotate(270deg) translate(0, -142%);
+-webkit-animation-delay: -0.25s;
+}
+.spinner .bar.p11 {
+-webkit-transform: rotate(300deg) translate(0, -142%);
+-webkit-animation-delay: -0.1667s;
+}
+.spinner .bar.p12 {
+-webkit-transform: rotate(330deg) translate(0, -142%);
+-webkit-animation-delay: -0.0833s;
+}
+@-webkit-keyframes fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.25;
+  }
+}
