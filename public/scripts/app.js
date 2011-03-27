@@ -541,9 +541,9 @@ $(function() {
       return self    
     }
   , add: function(item) {
-      this.partials.push(new App.Views.Favourite({ model: item, id: item.cid collection: this.collection }))
-      this.partials.push(new App.Views.Favourite({ model: item.inverse, id: item.inverse.cid collection: this.collection.inverse() }))
-      this.render()
+      //this.partials.push(new App.Views.Favourite({ model: item, id: item.cid collection: this.collection }))
+      //this.partials.push(new App.Views.Favourite({ model: item.inverse, id: item.inverse.cid collection: this.collection.inverse() }))
+      //this.render()
     }
   , remove: function(item) {
       $(this.el).remove('#' + item.cid)
