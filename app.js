@@ -95,6 +95,8 @@ app.get('/data/:origin/:destination.json', function(req, res) {
 // Only listen on $ node app.js
 
 if (!module.parent) {
+  // pre-cache locations
+  fetchLocations()
   app.listen(3000)
   console.log("Express server listening on port %d", app.address().port)
 }
