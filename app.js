@@ -29,17 +29,12 @@ app.configure('production', function() {
   app.use(express.errorHandler())
 })
 
-// Routes
+var locations = undefined
 
-app.get('/', function(req, res) {
-  res.render('index', {
-    title: 'MyCitytrain'
-  })
-})
-
-app.get('/data/locations.json', function(req, res) {
-  var locations = new Array()
-    , options = {
+var fetchLocations = function(callback) {
+  locations = []
+  
+  var options = {
         host: 'www.queenslandrail.com.au',
         port: 80,
         path: '/AllStations/Pages/AllStations.aspx',
@@ -49,7 +44,7 @@ app.get('/data/locations.json', function(req, res) {
   var request = http.request(options, function(response) {
     response.setEncoding('utf8')
     var body = ''
-    response.on('data', function (data) {
+    response.on('data', function(data) {
       body += data
     })
     response.on('end', function() {
@@ -58,12 +53,39 @@ app.get('/data/locations.json', function(req, res) {
         window.$('select option').each(function() {
           locations.push(window.$(this).attr('value').trim())
         })
-        res.header('Cache-Control', 'public; max-age=604800') // let the client cache the response for a week
-        res.send(locations)
+        if (callback) callback(locations)
       })
     })
   })
   request.end()
+  
+  // fetch the locations again in a day
+  setInterval(fetchLocations, 60 * 60 * 24 * 1000)
+}
+
+var getLocations = function(callback) {
+  if (callback) {
+    if (locations) {
+      callback(locations)
+    } else {
+      fetchLocations(callback)
+    }
+  }
+}
+
+// Routes
+
+app.get('/', function(req, res) {
+  res.render('index', {
+    title: 'MyCitytrain'
+  })
+})
+
+app.get('/data/locations.json', function(req, res) {
+  getLocations(function(locations) {
+    res.header('Cache-Control', 'public; max-age=604800') // let the client cache the response for a week
+    res.send(locations)
+  })
 })
 
 app.get('/data/:origin/:destination.json', function(req, res) {
