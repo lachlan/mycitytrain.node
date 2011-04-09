@@ -1,11 +1,9 @@
-
-/**
- * Module dependencies.
- */
-
 var express = require('express')
-  , http = require('http')
+//  , http = require('http')
   , jsdom = require('jsdom')
+  , request = require('request')
+  , querystring = require('querystring')
+  , restler = require('restler')
   
 var app = module.exports = express.createServer()
 
@@ -32,22 +30,9 @@ app.configure('production', function() {
 var locations = undefined
 
 var fetchLocations = function(callback) {
-  locations = []
-  
-  var options = {
-        host: 'www.queenslandrail.com.au',
-        port: 80,
-        path: '/AllStations/Pages/AllStations.aspx',
-        method: 'GET'
-      }
-
-  var request = http.request(options, function(response) {
-    response.setEncoding('utf8')
-    var body = ''
-    response.on('data', function(data) {
-      body += data
-    })
-    response.on('end', function() {
+  request({ uri: 'http://www.queenslandrail.com.au/AllStations/Pages/AllStations.aspx' }, function (error, response, body) {
+    if (!error && response.statusCode == 200) {
+      locations = []
       jsdom.env(body, ['http://code.jquery.com/jquery-1.5.min.js'], function(errors, window) {
         // parse page which contains a select element that includes all the location names
         window.$('select option').each(function() {
@@ -55,12 +40,36 @@ var fetchLocations = function(callback) {
         })
         if (callback) callback(locations)
       })
-    })
+    }
   })
-  request.end()
-  
   // fetch the locations again in a day
   setInterval(fetchLocations, 60 * 60 * 24 * 1000)
+}
+
+var fetchJourneys = function(origin, destination, departDate, limit, callback) {
+  if (!departDate) departDate = new Date();
+  if (!limit) limit = 5;
+  
+  var url = 'http://jp.translink.com.au/travel-information/journey-planner/train-planner'
+  var options = {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+  , data: querystring.encode({
+      FromStation: origin
+    , ToStation: destination
+    , TimeSearchMode: 'DepartAt'
+    , SearchDate: ('' + departDate.getFullYear() + '-' + (departDate.getMonth() + 1) + '-' + departDate.getDate())
+    , SearchHour: departDate.getHours() <= 12 ? departDate.getHours() : departDate.getHours() - 12
+    , SearchMinute: departDate.getMinutes()
+    , TimeMeridiem: departDate.getHours() <= 12 ? 'AM' : 'PM'
+    })
+  }
+  
+  restler.post(url, options).on('complete', function(data, response) {
+    console.log('response: ' + response)
+    console.log('data: ' + data)
+    callback(data)
+  })
+  
 }
 
 var getLocations = function(callback) {
@@ -89,7 +98,9 @@ app.get('/data/locations.json', function(req, res) {
 })
 
 app.get('/data/:origin/:destination.json', function(req, res) {
-  res.send([[1,2]])
+  fetchJourneys(req.params.origin, req.params.destination, new Date(), 5, function(journeys) {
+    res.send(journeys)
+  })
 })
 
 // Only listen on $ node app.js

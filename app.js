@@ -6,6 +6,7 @@
 var express = require('express')
   , http = require('http')
   , jsdom = require('jsdom')
+  , qs = require('querystring')
   
 var app = module.exports = express.createServer()
 
@@ -30,7 +31,6 @@ app.configure('production', function() {
 })
 
 var locations = undefined
-
 var fetchLocations = function(callback) {
   locations = []
   
@@ -73,8 +73,115 @@ var getLocations = function(callback) {
   }
 }
 
-// Routes
+Date.prototype.midnight = function() {
+  var d = new Date(this.getTime());
+  d.setHours(0)
+  d.setMinutes(0)
+  d.setSeconds(0)
+  d.setMilliseconds(0)
+  return d;
+}
 
+Date.prototype.parseTime = function(timeString) {
+  timeString ? timeString = timeString.trim() : ''
+  var fromDate = this.midnight()
+  if (timeString.match(/\+$/)) fromDate = fromDate.setDate(fromDate.getDate() + 1);  // after midnight so add 1 day
+
+  var matches = timeString.match(/(\d{1,2})\.(\d{1,2})(am|pm)/i)
+  if (matches) {
+    var hours = parseInt(matches[1])
+      , minutes = parseInt(matches[2])
+      , meridiem = matches[3]
+    
+    if (meridiem.toLowerCase() == 'pm') hours += 12  
+    fromDate.setHours(hours);
+    fromDate.setMinutes(minutes);
+  }
+  return fromDate;
+}
+
+var fetchJourneys = function(origin, destination, departDate, limit, callback) {
+  if (departDate) {
+    departDate = new Date(departDate.getTime() + (1000 * 60)) // add a minute to the departDate to only fetch journeys departing after that date
+  } else {  
+    departDate = new Date();
+  }
+  if (!limit) limit = 5;
+  
+  var host = 'jp.translink.com.au'
+    , port = 80
+    , data = qs.encode({
+        FromStation: origin
+      , ToStation: destination
+      , TimeSearchMode: 'DepartAt'
+      , SearchDate: ('' + departDate.getFullYear() + '-' + (departDate.getMonth() + 1) + '-' + departDate.getDate())
+      , SearchHour: departDate.getHours() <= 12 ? departDate.getHours() : departDate.getHours() - 12
+      , SearchMinute: departDate.getMinutes()
+      , TimeMeridiem: departDate.getHours() <= 12 ? 'AM' : 'PM'
+      })
+
+  // post form to translink web site to get a list of journeys
+  var request = http.request({
+    host: host
+  , port: port
+  , path: '/travel-information/journey-planner/train-planner'
+  , method: 'POST'
+  , headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+  }
+  , function(response) {
+    response.on('end', function() {
+      if (response.statusCode == 302) {
+        // redirect expected from translink
+        http.get({
+          host: host
+        , port: port
+        , path: response.headers['location']
+        , method: 'GET'
+        , headers: { cookie: response.headers['set-cookie'] }
+        }, function(res) {
+          res.setEncoding('utf8')
+          var body = ''
+          res.on('data', function(data) {
+            body += data
+          }).on('end', function() {
+            if (res.statusCode == 200) {
+              var journeys = []
+              jsdom.env(body, ['http://code.jquery.com/jquery-1.5.min.js'], function(errors, window) {
+                // parse page which contains a select element that includes all the location names
+                window.$('#optionsTable tbody tr').each(function() {
+                  var tds = window.$(this).find('td.timetd')               
+                  if (tds.length >= 2) {
+                    var departTime = departDate.parseTime(window.$(tds[0]).html()).getTime()
+                      , arriveTime = departDate.parseTime(window.$(tds[1]).html()).getTime()
+                    journeys.push([departTime, arriveTime])
+                  }
+                })
+                if (journeys.length < limit) {
+                  // go get some more journeys from translink until we've reached the requested limit
+                  fetchJourneys(origin, destination, new Date(journeys[journeys.length - 1][0]), limit - journeys.length, function(results) {
+                    callback(journeys.concat(results))
+                  })
+                } else {
+                  journeys.length = limit // truncate array to required limit
+                  callback(journeys)
+                }
+              })
+            } else {
+              callback()
+            }
+          })
+        })
+      } else {
+        // unexpected response from translink
+        callback()
+      }
+    })
+  })
+  request.write(data)
+  request.end()
+}
+
+// Routes
 app.get('/', function(req, res) {
   res.render('index', {
     title: 'MyCitytrain'
@@ -89,11 +196,23 @@ app.get('/data/locations.json', function(req, res) {
 })
 
 app.get('/data/:origin/:destination.json', function(req, res) {
-  res.send([[1,2]])
+  var departDate = undefined
+    , limit = undefined
+  if (req.query.after) {
+    departDate = new Date(parseInt(req.query.after))
+  }
+  if (req.query.limit) {
+    limit = parseInt(req.query.limit)
+  }
+  fetchJourneys(req.params.origin, req.params.destination, departDate, limit, function(journeys) {
+    if (journeys)
+      res.send(journeys)
+    else
+      res.send(500) // something went wrong :-(
+  })
 })
 
 // Only listen on $ node app.js
-
 if (!module.parent) {
   // pre-cache locations
   fetchLocations()
