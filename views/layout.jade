@@ -23,10 +23,10 @@ html
     script(src='/scripts/backbone.min.js')
     script(src='/scripts/extensions.js')
     script(src='/scripts/app.js')
-    script(id='header-template', src='templates/header.html', type='text/html')
+    script(id='header-template', type='text/template')
       | <h1>MyCitytrain</h1>
       | <a id='header-right-button' class='right button back reverse slideup fx' href='#'>Done</a>
-    script(id='journey-header-template', src='templates/header.html', type='text/html')
+    script(id='journey-header-template', type='text/template')
       | <a id='header-left-button' class='left button flip fx return <%= inverse ? "reverse" : "" %>' href='<%= url %>'>
       |   <span class='ir <%= inverse ? "inbound" : "" %>'>Return</span>
       | </a>
@@ -74,11 +74,11 @@ html
       |   <span class='location'><%= destination %></span> 
       |   <span class='time'><%= arrival.f('hh:mm a').toLowerCase() %></span>
       | </p>
-    script(id='load-template', src='templates/load.template', type='text/template')
+    script(id='load-template', type='text/template')
       | <button class='loader'>
       |   Load More Services<span>.</span><span>.</span><span>.</span>
       | </button>
-    script(id='settings-template', src='templates/settings.template', type='text/template')
+    script(id='settings-template', type='text/template')
       | <form>
       |   <ol>
       |     <% for (var i = 0; i < 7; i++) { %>
