@@ -23,82 +23,90 @@ html
     script(src='/scripts/backbone.min.js')
     script(src='/scripts/extensions.js')
     script(src='/scripts/app.js')
-    script(id='about-template')
-      <ul class='panel'>
-        <li class='first item'>
-          <h2>About</h2>
-          <p>MyCitytrain is about taking the Queensland Rail timetable with you on the go. Optimised for mobile devices like the iPhone, it's now easy to check when your next train departs wherever you are. Please add <a href='http://mycitytrain.info'>mycitytrain.info</a> to your home screen.</p>
-        </li>
-        <li class='last item'>
-          <h2>Credits</h2>
-          <p>Design and development by Lachlan Dowding and Kevin Read.</p>
-        </li>
-      </ul>
-    script(id='settings-template')
-      <form>
-        <ol>
-          <% for (var i = 0; i < 7; i++) { %>
-            <% if (i < collection.length) { %>
-              <li>
-                <input type='text' class='origin' placeholder='Origin' value='<%= collection[i][0] %>' />
-                to
-                <input type='text' class='destination' placeholder='Destination' value='<%= collection[i][1] %>' />
-              </li>
-            <% } else { %>
-              <li>
-                <input type='text' class='origin' placeholder='Origin' value='' />
-                to
-                <input type='text' class='destination' placeholder='Destination' value='' />
-              </li>              
-            <% } %>
-          <% } %>
-        </ol>
-      </form>
-    script(id='journey-template')
-      <span class='eta <%= className %>'>
-        <%= eta %>
-      </span>
-      <p class='origin'>
-        <span class='location'><%= origin %></span> 
-        <span class='time'><%= departure.f('hh:mm a').toLowerCase() %></span>
-      </p>
-      <p class='destination'>
-        <span class='location'><%= destination %></span> 
-        <span class='time'><%= arrival.f('hh:mm a').toLowerCase() %></span>
-      </p>
-    script(id='load-template')
-      <button class='loader'>Load More Services<span>.</span><span>.</span><span>.</span></button>
-    script(id='footer-template')
-      <% if (index === 0) { %>
-        <a href='#' class='left arrow disabled reverse slide fx'></a>
-      <% } else { %>
-        <a href='<%= collection.at(index - 1).url() %>' class='left arrow reverse slide fx'></a>
-      <% } %>
-      <ul class='group'>
-      <% collection.each(function(item, idx) { %>
-        <% if (idx === index) { %>
-          <li class='active'><a href='<%= item.url() %>' class='reverse slide fx'>&#9679;</a></li>          
-        <% } else if (idx < index) { %>
-          <li><a href='<%= item.url() %>' class='reverse slide fx'>&#9675;</a></li>          
-        <% } else { %>
-          <li><a href='<%= item.url() %>' class='slide fx'>&#9675;</a></li>          
-        <% } %>
-      <% }); %>
-      </ul>
-      <% if (index === (collection.length - 1)) { %>
-        <a href='#' class='right arrow disabled slide fx'></a>
-      <% } else { %>
-        <a href='<%= collection.at(index + 1).url() %>' class='right arrow slide fx'></a>
-      <% } %>
-    script(id='commute-header-template')
-      <a id='header-left-button' class='left button flip fx return <%= inverse ? "reverse" : "" %>' href='<%= url %>'><span class='ir <%= inverse ? "inbound" : "" %>'>Return</span></a>
-      <h1>MyCitytrain</h1>
-      <% if (inverse) { %>
-        <a id='header-right-button' class='right button slideup fx' href='/#/about'><span class='ir about'>About</span></a>
-      <% } else { %>
-        <a id='header-right-button' class='right button slideup fx' href='/#/settings'><span class='ir settings'>Settings</span></a>
-      <% } %>
-    script(id='header-template')
-      <h1>MyCitytrain</h1>
-      <a id='header-right-button' class='right button back reverse slideup fx' href='#'>Done</a>
+    script(id='header-template', src='templates/header.html', type='text/html')
+      | <h1>MyCitytrain</h1>
+      | <a id='header-right-button' class='right button back reverse slideup fx' href='#'>Done</a>
+    script(id='journey-header-template', src='templates/header.html', type='text/html')
+      | <a id='header-left-button' class='left button flip fx return <%= inverse ? "reverse" : "" %>' href='<%= url %>'>
+      |   <span class='ir <%= inverse ? "inbound" : "" %>'>Return</span>
+      | </a>
+      | <h1>MyCitytrain</h1>
+      | <% if (inverse) { %>
+      |   <a id='header-right-button' class='right button slideup fx' href='/#/about'>
+      |     <span class='ir about'>About</span>
+      |   </a>
+      | <% } else { %>
+      |   <a id='header-right-button' class='right button slideup fx' href='/#/settings'>
+      |     <span class='ir settings'>Settings</span>
+      |   </a>
+      | <% } %>
+    script(id='footer-template', type='text/template')
+      | <% if (index === 0) { %>
+      |   <a href='#' class='left arrow disabled reverse slide fx'></a>
+      | <% } else { %>
+      |   <a href='<%= collection.at(index - 1).url() %>' class='left arrow reverse slide fx'></a>
+      | < % } %>
+      | <ul class='group'>
+      | <% collection.each(function(item, idx) { %>
+      |   <% if (idx === index) { %>
+      |     <li class='active'><a href='<%= item.url() %>' class='reverse slide fx'>&#9679;</a></li>          
+      |   <% } else if (idx < index) { %>
+      |     <li><a href='<%= item.url() %>' class='reverse slide fx'>&#9675;</a></li>          
+      |   <% } else { %>
+      |     <li><a href='<%= item.url() %>' class='slide fx'>&#9675;</a></li>          
+      |   <% } %>
+      | <% }); %>
+      | </ul>
+      | <% if (index === (collection.length - 1)) { %>
+      |   <a href='#' class='right arrow disabled slide fx'></a>
+      | <% } else { %>
+      |   <a href='<%= collection.at(index + 1).url() %>' class='right arrow slide fx'></a>
+      | <% } %>    
+    script(id='journey-template', type='text/template')
+      | <span class='eta <%= className %>'>
+      |   <%= eta %>
+      | </span>
+      | <p class='origin'>
+      |   <span class='location'><%= origin %></span> 
+      |   <span class='time'><%= departure.f('hh:mm a').toLowerCase() %></span>
+      | </p>
+      | <p class='destination'>
+      |   <span class='location'><%= destination %></span> 
+      |   <span class='time'><%= arrival.f('hh:mm a').toLowerCase() %></span>
+      | </p>
+    script(id='load-template', src='templates/load.template', type='text/template')
+      | <button class='loader'>
+      |   Load More Services<span>.</span><span>.</span><span>.</span>
+      | </button>
+    script(id='settings-template', src='templates/settings.template', type='text/template')
+      | <form>
+      |   <ol>
+      |     <% for (var i = 0; i < 7; i++) { %>
+      |       <% if (i < collection.length) { %>
+      |         <li>
+      |           <input type='text' class='origin' placeholder='Origin' value='<%= collection[i][0] %>' />
+      |           to
+      |           <input type='text' class='destination' placeholder='Destination' value='<%= collection[i][1] %>' />
+      |         </li>
+      |       <% } else { %>
+      |         <li>
+      |           <input type='text' class='origin' placeholder='Origin' value='' />
+      |           to
+      |           <input type='text' class='destination' placeholder='Destination' value='' />
+      |         </li>              
+      |       <% } %>
+      |     <% } %>
+      |   </ol>
+      | </form>
+    script(id='about-template', type='text/template')
+      ul(class='panel')
+        li(class='first item')
+          h2 About
+          p 
+            | MyCitytrain is about taking the Queensland Rail timetable with you on the go. Optimised for mobile devices like the iPhone, it's now easy to check when your next train departs wherever you are. Please add 
+            a(href='http://mycitytrain.info') mycitytrain.info
+            | to your home screen.
+        li(class='last item')
+          h2 Credits
+          p Design and development by Lachlan Dowding and Kevin Read.
   body!= body

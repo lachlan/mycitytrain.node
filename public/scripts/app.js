@@ -459,7 +459,8 @@ $(function() {
       })
     
       self.collection.save()
-      history.back()
+      
+      window.location = '/' // reload the app?
       e.preventDefault()
     }    
   });
@@ -474,7 +475,7 @@ $(function() {
       'click .loader': 'load'
     }
   , header: function() {
-      return _.template($('#commute-header-template').html(), { url: this.model.inverse.url(), inverse: this.inverse })
+      return _.template($('#journey-header-template').html(), { url: this.model.inverse.url(), inverse: this.inverse })
     }
   , content: function() {
       return $('<div class="journeys"></div>').append(this.partial.render().el).append(_.template($('#load-template').html())())
