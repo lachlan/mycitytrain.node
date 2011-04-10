@@ -20,6 +20,8 @@ app.configure(function() {
   app.use(express.compiler({ src: __dirname + '/public', enable: ['less'] }))
   app.use(app.router)
   app.use(express.static(__dirname + '/public'))
+  app.use(express.logger({ format: ':method :uri' }));
+  
 })
 
 app.configure('development', function() {
@@ -156,9 +158,14 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
                     journeys.push([departTime, arriveTime])
                   }
                 })
+                if (journeys.length === 0) {
+                  departDate = new Date(departDate.midnight().getTime() + (24 * 60 * 60 * 1000))
+                } else {
+                  departDate = new Date(journeys[journeys.length - 1][0])
+                }
                 if (journeys.length < limit) {
                   // go get some more journeys from translink until we've reached the requested limit
-                  fetchJourneys(origin, destination, new Date(journeys[journeys.length - 1][0]), limit - journeys.length, function(results) {
+                  fetchJourneys(origin, destination, departDate, limit - journeys.length, function(results) {
                     callback(journeys.concat(results))
                   })
                 } else {
@@ -205,10 +212,15 @@ app.get('/data/:origin/:destination.json', function(req, res) {
     limit = parseInt(req.query.limit)
   }
   fetchJourneys(req.params.origin, req.params.destination, departDate, limit, function(journeys) {
-    if (journeys)
+    if (journeys) {
+      // cache the response until the first journey in the list departs
+      var now = new Date()
+      var firstDeparting = new Date(journeys[0][0])
+      res.header('Cache-Control', 'public; max-age=' + parseInt((firstDeparting - now) / 1000)) 
       res.send(journeys)
-    else
-      res.send(500) // something went wrong :-(
+    } else {
+      res.send(500) // something went wrong :-(      
+    }
   })
 })
 
