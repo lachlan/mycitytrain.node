@@ -5,8 +5,8 @@
 
 var express = require('express')
   , http = require('http')
-  , jsdom = require('jsdom')
   , qs = require('querystring')
+  , $ = require('jquery')
   
 var app = module.exports = express.createServer()
 
@@ -50,13 +50,10 @@ var fetchLocations = function(callback) {
       body += data
     })
     response.on('end', function() {
-      jsdom.env(body, ['http://code.jquery.com/jquery-1.5.min.js'], function(errors, window) {
-        // parse page which contains a select element that includes all the location names
-        window.$('select option').each(function() {
-          locations.push(window.$(this).attr('value').trim())
-        })
-        if (callback) callback(locations)
+      $(body).find('select option').each(function() {
+          locations.push($(this).attr('value').trim())
       })
+      if (callback) callback(locations)
     })
   })
   request.end()
@@ -106,7 +103,7 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
   if (departDate) {
     departDate = new Date(departDate.getTime() + (1000 * 60)) // add a minute to the departDate to only fetch journeys departing after that date
   } else {  
-    departDate = new Date();
+    departDate = new Date()
   }
   if (!limit) limit = 5;
   
@@ -121,6 +118,8 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
       , SearchMinute: departDate.getMinutes()
       , TimeMeridiem: departDate.getHours() <= 12 ? 'AM' : 'PM'
       })
+
+  console.log('data: ' + data)
 
   // post form to translink web site to get a list of journeys
   var request = http.request({
@@ -143,36 +142,35 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
         }, function(res) {
           res.setEncoding('utf8')
           var body = ''
-          res.on('data', function(data) {
-            body += data
-          }).on('end', function() {
+          res.on('data', function(data) { 
+            body += data 
+          })
+          res.on('end', function() {
             if (res.statusCode == 200) {
               var journeys = []
-              jsdom.env(body, ['http://code.jquery.com/jquery-1.5.min.js'], function(errors, window) {
-                // parse page which contains a select element that includes all the location names
-                window.$('#optionsTable tbody tr').each(function() {
-                  var tds = window.$(this).find('td.timetd')               
-                  if (tds.length >= 2) {
-                    var departTime = departDate.parseTime(window.$(tds[0]).html()).getTime()
-                      , arriveTime = departDate.parseTime(window.$(tds[1]).html()).getTime()
-                    journeys.push([departTime, arriveTime])
-                  }
-                })
-                if (journeys.length === 0) {
-                  departDate = new Date(departDate.midnight().getTime() + (24 * 60 * 60 * 1000))
-                } else {
-                  departDate = new Date(journeys[journeys.length - 1][0])
-                }
-                if (journeys.length < limit) {
-                  // go get some more journeys from translink until we've reached the requested limit
-                  fetchJourneys(origin, destination, departDate, limit - journeys.length, function(results) {
-                    callback(journeys.concat(results))
-                  })
-                } else {
-                  journeys.length = limit // truncate array to required limit
-                  callback(journeys)
+              $(body).find('#optionsTable tbody tr').each(function() {                
+                var tds = $(this).find('td.timetd')                
+                if (tds.length >= 2) {
+                  var departTime = departDate.parseTime($(tds[0]).html().trim()).getTime()
+                    , arriveTime = departDate.parseTime($(tds[1]).html().trim()).getTime()
+                  journeys.push([departTime, arriveTime])
                 }
               })
+              if (journeys.length === 0) {
+                departDate = new Date(departDate.midnight().getTime() + (24 * 60 * 60 * 1000))
+                console.log('departDate.midnight + 1 day: ' + departDate)
+              } else {
+                departDate = new Date(journeys[journeys.length - 1][0])
+              }
+              if (journeys.length < limit) {
+                // go get some more journeys from translink until we've reached the requested limit
+                fetchJourneys(origin, destination, departDate, limit - journeys.length, function(results) {
+                  callback(journeys.concat(results))
+                })
+              } else {
+                journeys.length = limit // truncate array to required limit
+                callback(journeys)
+              }
             } else {
               callback()
             }
