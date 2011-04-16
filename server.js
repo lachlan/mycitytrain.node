@@ -76,10 +76,7 @@ Date.prototype.midnight = function() {
 Date.prototype.parseTime = function(timeString) {
   timeString ? timeString = timeString.trim() : ''
   var fromDate = this.midnight()
-  console.log('timeString:' + timeString)
-  console.log('fromDate: ' + fromDate.toString())
   if (timeString.match(/\+$/)) fromDate.setDate(fromDate.getDate() + 1);  // after midnight so add 1 day
-  console.log('fromDate: ' + fromDate.toString())
 
   var matches = timeString.match(/(\d{1,2})\.(\d{1,2})(am|pm)/i)
   if (matches) {
@@ -113,8 +110,6 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
       , SearchMinute: departDate.getMinutes()
       , TimeMeridiem: departDate.getHours() <= 12 ? 'AM' : 'PM'
       })
-
-  console.log('data: ' + data)
 
   // post form to translink web site to get a list of journeys
   var request = http.request({
@@ -152,8 +147,7 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
                 }
               })
               if (journeys.length === 0) {
-                departDate = new Date(departDate.midnight().getTime() + (24 * 60 * 60 * 1000))
-                console.log('departDate.midnight + 1 day: ' + departDate)
+                departDate = new Date(departDate.midnight().getTime() + (24 * 60 * 60 * 1000))                
               } else {
                 departDate = new Date(journeys[journeys.length - 1][0])
               }
@@ -187,6 +181,31 @@ app.get('/', function(req, res) {
     title: 'MyCitytrain'
   })
 })
+
+app.get('/cache.manifest', function(req, res) {
+  // horrible but quick hack to return an HTML cache manifest with the correct mime type
+  var manifest = "CACHE MANIFEST\n\
+# version 0.0.1\n\
+/\n\
+/favicon.ico\n\
+/images/apple-touch-icon-114x114.png\n\
+/images/apple-touch-icon-72x72.png\n\
+/images/apple-touch-icon-57x57.png\n\
+/images/background_4x1.png\n\
+/images/drop_shadow_1x10.png\n\
+/images/sprites.png\n\
+/images/startup-320x460.png\n\
+/scripts/app.js\n\
+/styles/app.css\n\
+/styles/effects.css\n\
+\n\
+NETWORK:\n\
+/data"
+
+  res.header('Content-Type', 'text/cache-manifest');
+  res.end(manifest);
+})
+
 
 app.get('/data/locations.json', function(req, res) {
   getLocations(function(locations) {
