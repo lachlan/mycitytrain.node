@@ -34,8 +34,6 @@ app.configure('production', function() {
 
 var locations = undefined
 var fetchLocations = function(callback) {
-  locations = []
-  
   var options = {
         host: 'www.queenslandrail.com.au',
         port: 80,
@@ -50,6 +48,7 @@ var fetchLocations = function(callback) {
       body += data
     })
     response.on('end', function() {
+      locations = []
       $(body).find('select option').each(function() {
           locations.push($(this).attr('value').trim())
       })
@@ -59,7 +58,7 @@ var fetchLocations = function(callback) {
   request.end()
   
   // fetch the locations again in a day
-  setInterval(fetchLocations, 60 * 60 * 24 * 1000)
+  setInterval(fetchLocations, 24 * 60 * 60 * 1000)
 }
 
 var getLocations = function(callback) {
