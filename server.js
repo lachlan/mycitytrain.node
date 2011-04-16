@@ -2,6 +2,7 @@ var express = require('express')
   , http = require('http')
   , qs = require('querystring')
   , $ = require('jquery')
+  , _ = require('underscore')
   
 var app = module.exports = express.createServer()
 
@@ -91,6 +92,33 @@ Date.prototype.parseTime = function(timeString) {
   return fromDate;
 }
 
+Date.parse = function(other) {
+  if (_.isNumber(other)) {
+    var date = new Date();
+    date.setTime(other);
+    return date;
+  } else if (_.isDate(other)) {
+    return other;
+  } else if (_(other).isString()){
+    var matches = other.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).(\d{3})(Z)/)
+    if (matches) {
+      var year = matches[1]
+        , month = matches[2]
+        , day = matches[3]
+        , hours = matches[4]
+        , minutes = matches[5]
+        , seconds = matches[6]
+        , milliseconds = matches[7]
+        
+      return new Date(Date.UTC(year, month, day, hours, minutes, seconds, milliseconds))
+    } else {
+      return Date.__original_parse__(other);
+    }
+  } else {
+    return Date.__original_parse__(other);
+  }
+}
+
 var fetchJourneys = function(origin, destination, departDate, limit, callback) {
   if (departDate) {
     departDate = new Date(departDate.getTime() + (1000 * 60)) // add a minute to the departDate to only fetch journeys departing after that date
@@ -105,11 +133,13 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
         FromStation: origin
       , ToStation: destination
       , TimeSearchMode: 'DepartAt'
-      , SearchDate: ('' + departDate.getFullYear() + '-' + (departDate.getMonth() + 1) + '-' + departDate.getDate())
+      , SearchDate: ('' + departDate.getFullYear() + '-' + departDate.getMonth() + '-' + departDate.getDate())
       , SearchHour: departDate.getHours() <= 12 ? departDate.getHours() : departDate.getHours() - 12
       , SearchMinute: departDate.getMinutes()
       , TimeMeridiem: departDate.getHours() <= 12 ? 'AM' : 'PM'
       })
+
+  console.log('request data = ' + data)
 
   // post form to translink web site to get a list of journeys
   var request = http.request({
@@ -135,7 +165,7 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
           res.on('data', function(data) { 
             body += data 
           })
-          res.on('end', function() {
+          res.on('end', function() {            
             if (res.statusCode == 200) {
               var journeys = []
               $(body).find('#optionsTable tbody tr').each(function() {                
@@ -218,10 +248,12 @@ app.get('/data/:origin/:destination.json', function(req, res) {
   var departDate = undefined
     , limit = undefined
   if (req.query.after) {
-    departDate = new Date(parseInt(req.query.after))
+    departDate = new Date.parse(req.query.after)
+    console.log('after = ' + JSON.stringify(departDate))
   }
   if (req.query.limit) {
     limit = parseInt(req.query.limit)
+    console.log('limit = ' + limit)
   }
   fetchJourneys(req.params.origin, req.params.destination, departDate, limit, function(journeys) {
     if (journeys) {
