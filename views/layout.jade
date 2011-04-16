@@ -11,12 +11,9 @@ html
     link(href='/images/apple-touch-icon-72x72.png', rel='apple-touch-icon', sizes='72x72')
     link(href='/images/apple-touch-icon-114x114.png', rel='apple-touch-icon', sizes='114x114')
     link(href='/styles/reset.css', media='all', rel='stylesheet')
-    link(href='/styles/print.css', media='all', rel='stylesheet')
     link(href='/styles/effects.css', media='all', rel='stylesheet')
-    link(href='/styles/spinner.css', media='all', rel='stylesheet')
     link(href='/styles/app.css', media='all', rel='stylesheet')
     script(src='/scripts/underscore.min.js')
-    script(src='/scripts/date.f-0.5.0.js')
     script(src='/scripts/jquery-1.5.1.min.js')
     script(src='/scripts/jquery.cookie.js')
     script(src='/scripts/jquery-ui-1.8.9.custom.min.js')
@@ -68,11 +65,11 @@ html
       | </span>
       | <p class='origin'>
       |   <span class='location'><%= origin %></span> 
-      |   <span class='time'><%= departure.f('hh:mm a').toLowerCase() %></span>
+      |   <span class='time'><%= departure.format().toLowerCase() %></span>
       | </p>
       | <p class='destination'>
       |   <span class='location'><%= destination %></span> 
-      |   <span class='time'><%= arrival.f('hh:mm a').toLowerCase() %></span>
+      |   <span class='time'><%= arrival.format().toLowerCase() %></span>
       | </p>
     script(id='load-template', type='text/template')
       | <button class='loader'>

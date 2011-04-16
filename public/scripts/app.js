@@ -225,7 +225,7 @@ $(function() {
           )
 
       journeys.url = self.url()    
-      if (self.length > 0) journeys.url += '&after=' + self.last().get('departure').getTime()
+      if (self.length > 0) journeys.url += '&after=' + JSON.stringify(self.last().get('departure')).escape()
   
       journeys.fetch(
         { 

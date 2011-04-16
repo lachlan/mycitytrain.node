@@ -1,16 +1,9 @@
-
-/**
- * Module dependencies.
- */
-
 var express = require('express')
   , http = require('http')
   , qs = require('querystring')
   , $ = require('jquery')
   
 var app = module.exports = express.createServer()
-
-// Configuration
 
 app.configure(function() {
   app.set('views', __dirname + '/views')
@@ -83,7 +76,10 @@ Date.prototype.midnight = function() {
 Date.prototype.parseTime = function(timeString) {
   timeString ? timeString = timeString.trim() : ''
   var fromDate = this.midnight()
-  if (timeString.match(/\+$/)) fromDate = fromDate.setDate(fromDate.getDate() + 1);  // after midnight so add 1 day
+  console.log('timeString:' + timeString)
+  console.log('fromDate: ' + fromDate.toString())
+  if (timeString.match(/\+$/)) fromDate.setDate(fromDate.getDate() + 1);  // after midnight so add 1 day
+  console.log('fromDate: ' + fromDate.toString())
 
   var matches = timeString.match(/(\d{1,2})\.(\d{1,2})(am|pm)/i)
   if (matches) {
@@ -92,8 +88,8 @@ Date.prototype.parseTime = function(timeString) {
       , meridiem = matches[3]
     
     if (meridiem.toLowerCase() == 'pm') hours += 12  
-    fromDate.setHours(hours);
-    fromDate.setMinutes(minutes);
+    fromDate.setHours(hours)
+    fromDate.setMinutes(minutes)
   }
   return fromDate;
 }
@@ -150,8 +146,8 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
               $(body).find('#optionsTable tbody tr').each(function() {                
                 var tds = $(this).find('td.timetd')                
                 if (tds.length >= 2) {
-                  var departTime = departDate.parseTime($(tds[0]).html().trim()).getTime()
-                    , arriveTime = departDate.parseTime($(tds[1]).html().trim()).getTime()
+                  var departTime = departDate.parseTime($(tds[0]).html().trim())
+                    , arriveTime = departDate.parseTime($(tds[1]).html().trim())
                   journeys.push([departTime, arriveTime])
                 }
               })
