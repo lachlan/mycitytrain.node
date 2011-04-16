@@ -10,8 +10,6 @@ html
     link(href='/images/apple-touch-icon-57x57.png', rel='apple-touch-icon')
     link(href='/images/apple-touch-icon-72x72.png', rel='apple-touch-icon', sizes='72x72')
     link(href='/images/apple-touch-icon-114x114.png', rel='apple-touch-icon', sizes='114x114')
-    link(href='/styles/reset.css', media='all', rel='stylesheet')
-    link(href='/styles/effects.css', media='all', rel='stylesheet')
     link(href='/styles/app.css', media='all', rel='stylesheet')
     script(src='/scripts/underscore.min.js')
     script(src='/scripts/jquery-1.5.1.min.js')
@@ -22,19 +20,19 @@ html
     script(src='/scripts/app.js')
     script(id='header-template', type='text/template')
       | <h1>MyCitytrain</h1>
-      | <a id='header-right-button' class='right button back reverse slideup fx' href='#'>Done</a>
+      | <a id='header-right-button' class='back reverse slideup fx' href='#'>Done</a>
     script(id='journey-header-template', type='text/template')
-      | <a id='header-left-button' class='left button flip fx return <%= inverse ? "reverse" : "" %>' href='<%= url %>'>
-      |   <span class='ir <%= inverse ? "inbound" : "" %>'>Return</span>
+      | <a id='header-left-button' class='flip fx return <%= inverse ? "reverse" : "" %>' href='<%= url %>'>
+      |   <span class='<%= inverse ? "inbound" : "" %>'>Return</span>
       | </a>
       | <h1>MyCitytrain</h1>
       | <% if (inverse) { %>
-      |   <a id='header-right-button' class='right button slideup fx' href='/#/about'>
-      |     <span class='ir about'>About</span>
+      |   <a id='header-right-button' class='slideup fx' href='/#/about'>
+      |     <span class='about'>About</span>
       |   </a>
       | <% } else { %>
-      |   <a id='header-right-button' class='right button slideup fx' href='/#/settings'>
-      |     <span class='ir settings'>Settings</span>
+      |   <a id='header-right-button' class='slideup fx' href='/#/settings'>
+      |     <span class='settings'>Settings</span>
       |   </a>
       | <% } %>
     script(id='footer-template', type='text/template')
@@ -72,7 +70,7 @@ html
       |   <span class='time'><%= arrival.format().toLowerCase() %></span>
       | </p>
     script(id='load-template', type='text/template')
-      | <button class='loader'>
+      | <button>
       |   Load More Services<span>.</span><span>.</span><span>.</span>
       | </button>
     script(id='settings-template', type='text/template')
@@ -96,14 +94,14 @@ html
       |   </ol>
       | </form>
     script(id='about-template', type='text/template')
-      ul(class='panel')
-        li(class='first item')
+      ul
+        li
           h2 About
           p 
             | MyCitytrain is about taking the Queensland Rail timetable with you on the go. Optimised for mobile devices like the iPhone, it's now easy to check when your next train departs wherever you are. Please add 
             a(href='http://mycitytrain.info') mycitytrain.info
-            | to your home screen.
-        li(class='last item')
+            |  to your home screen.
+        li
           h2 Credits
           p Design and development by Lachlan Dowding and Kevin Read.
   body!= body
