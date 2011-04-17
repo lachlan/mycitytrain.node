@@ -420,63 +420,15 @@ var App = {
 }
 
 $(function() {
-  var updateLocationName = function(element) {
-    var value = $(element).attr('value');
-    if (value) {
-      var matches = search(value, true);
-      if (matches.length > 0) {
-        $(element).attr('value', matches[0]);
-      }
-    }
-  };
-
-  // save the original value of each form input field
-  // only works for <input> elements
-  var saveFormValues = function(form) {
-    $(form).find('input').each(function() {
-      $(this).data('value', $(this).attr('value'));
-    });
-  }
-
-  var formHasChanged = function(form) {
-    var dirty = false;
-    $(form).find('input').each(function() {
-      dirty = dirty || ($(this).attr('value') !== $(this).data('value'));
-    });
-    return dirty;
-  };
-
-
-  // update user entered value to use the correctly captitalized 
-  // station names after an input field changes
-  $('#settings form input').change(function() {
-    updateLocationName($(this));
-  });
-
-  saveFormValues($('#settings form'));
-
   $.support.WebKitAnimationEvent = (typeof WebKitTransitionEvent == "object");
-
   var active = 'active';
-
-
-
-
-
-
-
   // handle transitions automatically on non-disabled and non-submit links
   $('body').delegate('a.fx:not(.disabled):not(.submit)', 'click', function() { 
     $(this).parents('.page').attr('data-fx', $(this).attr('class'));
   });
 
-  // don't allow click events on disabled links
-  $('body').delegate('a.disabled', 'click', function() {
-    return false;
-  });
-
   var transition = function(to, callback) {
-    var effects = 'fx in out flip slide slideup reverse';
+    var effects = 'fx in out flip slide pop cube swap slideup dissolve fade reverse';
     var from = $('.page:visible');
     to = $(to)
 
@@ -858,27 +810,35 @@ $(function() {
   , done: function(e) {
       // save changes!
       var self = this
-      
-      self.collection.remove(self.collection.models)
+        , changed = false
+        , models = []
+        , count = 0      
       
       self.$('form li').each(function() {
         var origin = $(this).find('input.origin').attr('value').trim().toTitleCase()
           , destination = $(this).find('input.destination').attr('value').trim().toTitleCase()
         
-        if (origin !== "" && destination !== "") {
+        if (!_(origin).isEmpty() && !_(destination).isEmpty()) {
           var favourite = self.collection.find(function(item) {
             return _(origin).isEqual(item.get('origin')) && _(destination).isEqual(item.get('destination'))
           })
         
           if (_(favourite).isUndefined()) {
-            self.collection.add(new App.Models.Favourite({ origin: origin, destination: destination }))
+            changed = true
+            models.push(new App.Models.Favourite({ origin: origin, destination: destination }))
+          } else {
+            models.push(favourite)
           }
+          count++
         }
       })
-    
-      self.collection.save()
-      
-      window.location = '/' // reload the app?
+      if (changed || count < self.collection.length) {
+        self.collection.refresh(models)    
+        self.collection.save()
+        window.location = '/' // reload the app?
+      } else {
+        history.back()
+      }
       e.preventDefault()
     }    
   });
