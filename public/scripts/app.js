@@ -609,13 +609,14 @@ $(function() {
         )
       }
     }
-  , url: function() {
+  , url: function(limit) {
+      if (_(limit).isUndefined()) limit = this.limit
       return ('/data/' 
              + this.origin.escape()
              + '/' 
              + this.destination.escape() 
              + '.json?limit='
-             + this.limit
+             + limit
              ).toLowerCase()
     }
   , parse: function(response) {
@@ -629,7 +630,7 @@ $(function() {
         }
       )
     }
-  , next: function(callback) {
+  , next: function(callback, limit) {
       var self = this
         , journeys = new App.Models.Journeys([], 
             { 
@@ -638,7 +639,7 @@ $(function() {
             }
           )
 
-      journeys.url = self.url()    
+      journeys.url = self.url(limit)    
       if (self.length > 0) journeys.url += '&after=' + JSON.stringify(self.last().get('departure')).escape()
   
       journeys.fetch(
@@ -653,7 +654,6 @@ $(function() {
   , remove: function(models, options) {
       Backbone.Collection.prototype.remove.call(this, models, options)
       // after removing some services, automatically refresh the collection if its below its limit
-      if (this.length < this.limit) this.next()
     }
   , expire: function() {
       var self = this
@@ -665,6 +665,7 @@ $(function() {
           journey.change()
           if (journey.get('departure') <= Date.now()) self.remove(journey)
         })
+        if (this.length < this.limit) this.next(undefined, this.limit - this.length)
       }
     }
   , comparator: function(service) {
