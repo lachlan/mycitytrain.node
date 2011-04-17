@@ -322,7 +322,7 @@ String.prototype.unescape = function() {
   return unescape(this).replace(/[-_]/g, ' ');
 }
 Date.prototype.duration = function(other, unit) {
-  var duration = other - this;
+  var duration = other.getTime() - this.getTime();
   if (unit == 'seconds') {
     duration = Math.round(duration/1000); 
   } else if (unit == 'minutes') {
@@ -385,30 +385,30 @@ Date.prototype.format = function() {
 }
 Date.__original_parse__ = Date.parse;
 Date.parse = function(other) {
+  var date = new Date()
   if (_.isNumber(other)) {
-    var date = new Date();
-    date.setTime(other);
-    return date;
+    date.setTime(other)
   } else if (_.isDate(other)) {
-    return other;
+    date = other
   } else if (_(other).isString()){
     var matches = other.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).(\d{3})(Z)/)
     if (matches) {
-      var year = matches[1]
-        , month = matches[2]
-        , day = matches[3]
-        , hours = matches[4]
-        , minutes = matches[5]
-        , seconds = matches[6]
-        , milliseconds = matches[7]
+      var year = parseInt(matches[1])
+        , month = parseInt(matches[2])
+        , day = parseInt(matches[3])
+        , hours = parseInt(matches[4])
+        , minutes = parseInt(matches[5])
+        , seconds = parseInt(matches[6])
+        , milliseconds = parseInt(matches[7])
         
-      return new Date(Date.UTC(year, month, day, hours, minutes, seconds, milliseconds))
+      date = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds, milliseconds))
     } else {
-      return Date.__original_parse__(other);
+      date = Date.__original_parse__(other);
     }
   } else {
-    return Date.__original_parse__(other);
+    date = Date.__original_parse__(other);
   }
+  return date
 }
 Date.now = function() { return new Date(); }
 
@@ -585,7 +585,7 @@ $(function() {
 
   App.Models.Journeys = Backbone.Collection.extend({ 
     model: App.Models.Journey
-  , limit: 5
+  , limit: 4
   , initialize: function(models, options) {
       _(this).bindAll()
       _(this).extend(
@@ -919,7 +919,7 @@ $(function() {
         }
       }
       
-      animateLoader(this.$('.loader'), function() { return finished })
+      animateLoader(this.$('button'), function() { return finished })
       
       this.model.journeys.next(function() {
         finished = true

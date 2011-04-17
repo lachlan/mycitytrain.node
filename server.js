@@ -85,7 +85,7 @@ Date.prototype.parseTime = function(timeString) {
       , minutes = parseInt(matches[2])
       , meridiem = matches[3]
     
-    if (meridiem.toLowerCase() == 'pm') hours += 12  
+    if (meridiem.toLowerCase() == 'pm' && hours < 12) hours += 12  
     fromDate.setHours(hours)
     fromDate.setMinutes(minutes)
   }
@@ -93,50 +93,59 @@ Date.prototype.parseTime = function(timeString) {
 }
 
 Date.parse = function(other) {
+  var date = new Date()
   if (_.isNumber(other)) {
-    var date = new Date();
-    date.setTime(other);
-    return date;
+    date.setTime(other)
   } else if (_.isDate(other)) {
-    return other;
+    date = other
   } else if (_(other).isString()){
     var matches = other.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).(\d{3})(Z)/)
     if (matches) {
-      var year = matches[1]
-        , month = matches[2]
-        , day = matches[3]
-        , hours = matches[4]
-        , minutes = matches[5]
-        , seconds = matches[6]
-        , milliseconds = matches[7]
+      var year = parseInt(matches[1])
+        , month = parseInt(matches[2])
+        , day = parseInt(matches[3])
+        , hours = parseInt(matches[4])
+        , minutes = parseInt(matches[5])
+        , seconds = parseInt(matches[6])
+        , milliseconds = parseInt(matches[7])
         
-      return new Date(Date.UTC(year, month, day, hours, minutes, seconds, milliseconds))
+      date = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds, milliseconds))
     } else {
-      return Date.__original_parse__(other);
+      date = Date.__original_parse__(other);
     }
   } else {
-    return Date.__original_parse__(other);
+    date = Date.__original_parse__(other);
   }
+  return date
 }
 
 var fetchJourneys = function(origin, destination, departDate, limit, callback) {
-  if (departDate) {
-    departDate = new Date(departDate.getTime() + (1000 * 60)) // add a minute to the departDate to only fetch journeys departing after that date
-  } else {  
+  if (!_(departDate).isDate()) {
     departDate = new Date()
   }
-  if (!limit) limit = 5;
+  // add a minute to the departDate to only fetch journeys departing after that date
+  departDate = new Date(departDate.getTime() + (1000 * 60))
   
+  console.log('departDate = ' + departDate)
+  
+  if (!_(limit).isNumber() || limit < 0) {
+    // default to how many results translink return in a single search
+    limit = 4 
+  } else {
+    // otherwise just make sure we've got an integer
+    limit = Math.floor(limit) 
+  }
+    
   var host = 'jp.translink.com.au'
     , port = 80
     , data = qs.encode({
         FromStation: origin
       , ToStation: destination
       , TimeSearchMode: 'DepartAt'
-      , SearchDate: ('' + departDate.getFullYear() + '-' + departDate.getMonth() + '-' + departDate.getDate())
+      , SearchDate: ('' + departDate.getFullYear() + '-' + (departDate.getMonth() + 1) + '-' + departDate.getDate())
       , SearchHour: departDate.getHours() <= 12 ? departDate.getHours() : departDate.getHours() - 12
       , SearchMinute: departDate.getMinutes()
-      , TimeMeridiem: departDate.getHours() <= 12 ? 'AM' : 'PM'
+      , TimeMeridiem: departDate.getHours() < 12 ? 'AM' : 'PM'
       })
 
   console.log('request data = ' + data)
@@ -215,7 +224,7 @@ app.get('/', function(req, res) {
 app.get('/cache.manifest', function(req, res) {
   // horrible but quick hack to return an HTML cache manifest with the correct mime type
   var manifest = "CACHE MANIFEST\n\
-# version 0.0.1\n\
+# version 0.0.3\n\
 /\n\
 /favicon.ico\n\
 /images/apple-touch-icon-114x114.png\n\
