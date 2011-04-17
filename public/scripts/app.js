@@ -942,8 +942,7 @@ $(function() {
       }
     }
   , footer: function() {
-      //return _.template($('#footer-template').html(), { collection: this.collection, index: this.collection.indexOf(this.model) })
-      return ''
+      return _.template($('#footer-template').html(), { collection: this.collection, index: this.collection.indexOf(this.model) })
     }
   })
 
