@@ -3,6 +3,50 @@
   -webkit-animation-timing-function: ease-in-out;
   -webkit-animation-duration: 350ms;
 }
+.fx.slide.in {
+  -webkit-animation-name: slideinfromright;
+}
+.fx.slide.out {
+  -webkit-animation-name: slideouttoleft;
+}
+.fx.slide.in.reverse {
+  -webkit-animation-name: slideinfromleft;
+}
+.fx.slide.out.reverse {
+  -webkit-animation-name: slideouttoright;
+}
+@-webkit-keyframes slideinfromright {
+  from {
+    -webkit-transform: translateX(100%);
+  }
+  to {
+  -webkit-transform: translateX(0);
+  }
+}
+@-webkit-keyframes slideinfromleft {
+  from {
+    -webkit-transform: translateX(-100%);
+  }
+  to {
+    -webkit-transform: translateX(0);
+  }
+}
+@-webkit-keyframes slideouttoleft {
+  from {
+    -webkit-transform: translateX(0);
+  }
+  to {
+    -webkit-transform: translateX(-100%);
+  }
+}
+@-webkit-keyframes slideouttoright {
+  from {
+    -webkit-transform: translateX(0);
+  }
+  to {
+    -webkit-transform: translateX(100%);
+  }
+}
 .fx.flip {
   -webkit-animation-duration: .65s;
 }
