@@ -81,8 +81,8 @@ Date.prototype.parseTime = function(timeString) {
 
   var matches = timeString.match(/(\d{1,2})\.(\d{1,2})(am|pm)/i)
   if (matches) {
-    var hours = parseInt(matches[1])
-      , minutes = parseInt(matches[2])
+    var hours = parseInt(matches[1], 10)
+      , minutes = parseInt(matches[2], 10)
       , meridiem = matches[3]
     
     if (meridiem.toLowerCase() == 'pm' && hours < 12) hours += 12  
@@ -101,13 +101,13 @@ Date.parse = function(other) {
   } else if (_(other).isString()){
     var matches = other.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).(\d{3})(Z)/)
     if (matches) {
-      var year = parseInt(matches[1])
-        , month = parseInt(matches[2])
-        , day = parseInt(matches[3])
-        , hours = parseInt(matches[4])
-        , minutes = parseInt(matches[5])
-        , seconds = parseInt(matches[6])
-        , milliseconds = parseInt(matches[7])
+      var year = parseInt(matches[1], 10)
+        , month = parseInt(matches[2], 10)
+        , day = parseInt(matches[3], 10)
+        , hours = parseInt(matches[4], 10)
+        , minutes = parseInt(matches[5], 10)
+        , seconds = parseInt(matches[6], 10)
+        , milliseconds = parseInt(matches[7], 10)
         
       date = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds, milliseconds))
     } else {
@@ -224,7 +224,7 @@ app.get('/', function(req, res) {
 app.get('/cache.manifest', function(req, res) {
   // horrible but quick hack to return an HTML cache manifest with the correct mime type
   var manifest = "CACHE MANIFEST\n\
-# version 0.0.3\n\
+# version 0.0.4\n\
 /\n\
 /favicon.ico\n\
 /images/apple-touch-icon-114x114.png\n\
@@ -261,7 +261,7 @@ app.get('/data/:origin/:destination.json', function(req, res) {
     console.log('after = ' + JSON.stringify(departDate))
   }
   if (req.query.limit) {
-    limit = parseInt(req.query.limit)
+    limit = parseInt(req.query.limit, 10)
     console.log('limit = ' + limit)
   }
   fetchJourneys(req.params.origin, req.params.destination, departDate, limit, function(journeys) {
@@ -269,7 +269,7 @@ app.get('/data/:origin/:destination.json', function(req, res) {
       // cache the response until the first journey in the list departs
       var now = new Date()
       var firstDeparting = new Date(journeys[0][0])
-      var maxAge = parseInt((firstDeparting - now) / 1000)
+      var maxAge = parseInt((firstDeparting - now) / 1000, 10)
       if (maxAge < 0) maxAge = 0
       res.header('Cache-Control', 'public; max-age=' + maxAge) 
       res.send(journeys)

@@ -393,13 +393,13 @@ Date.parse = function(other) {
   } else if (_(other).isString()){
     var matches = other.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).(\d{3})(Z)/)
     if (matches) {
-      var year = parseInt(matches[1])
-        , month = parseInt(matches[2])
-        , day = parseInt(matches[3])
-        , hours = parseInt(matches[4])
-        , minutes = parseInt(matches[5])
-        , seconds = parseInt(matches[6])
-        , milliseconds = parseInt(matches[7])
+      var year = parseInt(matches[1], 10)
+        , month = parseInt(matches[2], 10)
+        , day = parseInt(matches[3], 10)
+        , hours = parseInt(matches[4], 10)
+        , minutes = parseInt(matches[5], 10)
+        , seconds = parseInt(matches[6], 10)
+        , milliseconds = parseInt(matches[7], 10)
         
       date = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds, milliseconds))
     } else {
@@ -476,7 +476,7 @@ $(function() {
   });
 
   var transition = function(to, callback) {
-    var effects = 'fx in out flip slide pop cube swap slideup dissolve fade reverse';
+    var effects = 'fx in out flip slide slideup reverse';
     var from = $('.page:visible');
     to = $(to)
 
@@ -886,7 +886,7 @@ $(function() {
       this.inverse = false || options.inverse
     }
   , events: {
-      'click button': 'load'
+      'click .loader': 'load'
     }
   , header: function() {
       return _.template($('#journey-header-template').html(), { url: this.model.inverse.url(), inverse: this.inverse })
