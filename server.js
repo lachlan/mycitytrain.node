@@ -3,6 +3,7 @@ var express = require('express')
   , qs = require('querystring')
   , $ = require('jquery')
   , _ = require('underscore')
+  , time = require('time')
   
 var app = module.exports = express.createServer()
 
@@ -25,6 +26,8 @@ app.configure('development', function() {
 app.configure('production', function() {
   app.use(express.errorHandler())
 })
+
+var timezone = 'Australia/Brisbane'
 
 var locations = undefined
 var fetchLocations = function(callback) {
@@ -66,7 +69,8 @@ var getLocations = function(callback) {
 }
 
 Date.prototype.midnight = function() {
-  var d = new Date(this.getTime());
+  var d = new time.Date(this.getTime());
+  d.setTimeZone(timezone)
   d.setHours(0)
   d.setMinutes(0)
   d.setSeconds(0)
@@ -124,9 +128,11 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
     departDate = new Date()
   }
   // add a minute to the departDate to only fetch journeys departing after that date
-  departDate = new Date(departDate.getTime() + (1000 * 60))
+  departDate = new time.Date(departDate.getTime() + (1000 * 60))
+  // use the correct timezone for dealing with translink
+  departDate.setTimeZone(timezone)
   
-  console.log('departDate = ' + departDate)
+  console.log('departDate = ' + departDate.toString())
   
   if (!_(limit).isNumber() || limit < 0) {
     // default to how many results translink return in a single search
