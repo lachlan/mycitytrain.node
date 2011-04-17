@@ -653,19 +653,22 @@ $(function() {
     }
   , remove: function(models, options) {
       Backbone.Collection.prototype.remove.call(this, models, options)
-      // after removing some services, automatically refresh the collection if its below its limit
     }
-  , expire: function() {
+  , expire: function(callback) {
       var self = this
       if (this.length === 0) {
-        this.next()
+        this.next(callback)
       } else {
         self.each(function(journey) {
           // trigger an update to the eta
           journey.change()
           if (journey.get('departure') <= Date.now()) self.remove(journey)
         })
-        if (this.length < this.limit) this.next(undefined, this.limit - this.length)
+        // after removing some services, automatically refresh the collection if its below its limit
+        if (this.length < this.limit) 
+          this.next(callback, this.limit - this.length)
+        else if (_(callback).isFunction())
+          callback()
       }
     }
   , comparator: function(service) {
@@ -897,18 +900,19 @@ $(function() {
     }
   , load: function() {
       var finished = false
+      var button = this.$('button')
+      var expire = button.attr('disabled', 'disabled').hasClass('expire-only')
       
       var animateLoader = function(element, isFinished) {
-        var loader = $(element).attr('disabled', 'disabled')
+        var element = $(element)
           , className = 'transparent'
-          , elements = loader.find('span')
+          , elements = element.find('span')
           , finished = isFinished
 
         if (_.isFunction(isFinished)) finished = isFinished()
         
         if (finished) {
           elements.removeClass(className)
-          loader.removeAttr('disabled')
         } else {
           var invisible = elements.filter('.' + className).first()
           if (invisible.length > 0) {
@@ -920,11 +924,22 @@ $(function() {
         }
       }
       
-      animateLoader(this.$('button'), function() { return finished })
+      // animate the loading button, but only after 250 ms has passed in case action is super quick
+      window.setTimeout(function() {
+        animateLoader(button, function() { return finished })
+      }, 250);
       
-      this.model.journeys.next(function() {
-        finished = true
-      })
+      if (expire) {
+        this.model.journeys.expire(function() {
+          button.removeClass('expire-only').removeAttr('disabled')
+          finished = true
+        })
+      } else {
+        this.model.journeys.next(function() {
+          button.removeAttr('disabled')
+          finished = true
+        })        
+      }
     }
   , footer: function() {
       //return _.template($('#footer-template').html(), { collection: this.collection, index: this.collection.indexOf(this.model) })
@@ -1008,7 +1023,6 @@ $(function() {
       // pre-render the element on the page, it won't be displayed until a journey url is accessed
       var element = this.view.render().el
       $('body').append(element)
-      //$(element).find('.loader:not(.disabled)').click()
     }
   , root: function() {
       var hash = '/settings' // redirect to settings when no favourites exist
@@ -1054,7 +1068,7 @@ $(function() {
 
       var self = this
       var run = function() {
-        self.favourites.expire()
+        $('button:not(.disabled)').addClass('expire-only').click()
         window.setTimeout(run, (Date.now().next('minute') - Date.now()))
       }
       run()
