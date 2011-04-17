@@ -886,7 +886,7 @@ $(function() {
       this.inverse = false || options.inverse
     }
   , events: {
-      'click .loader': 'load'
+      'click button': 'load'
     }
   , header: function() {
       return _.template($('#journey-header-template').html(), { url: this.model.inverse.url(), inverse: this.inverse })
