@@ -386,12 +386,12 @@ Date.prototype.format = function() {
 Date.__original_parse__ = Date.parse;
 Date.parse = function(other) {
   var date = new Date()
-  if (_.isNumber(other)) {
+  if (_(other).isNumber()) {
     date.setTime(other)
-  } else if (_.isDate(other)) {
+  } else if (_(other).isDate()) {
     date = other
   } else if (_(other).isString()){
-    var matches = other.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).(\d{3})(Z)/)
+    var matches = other.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).(\d{3})(Z)/)  // ISO8601 datetime string
     if (matches) {
       var year = parseInt(matches[1], 10)
         , month = parseInt(matches[2], 10)
