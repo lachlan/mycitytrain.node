@@ -94,8 +94,6 @@ Date.prototype.parseTime = function(timeString) {
   else
     timeString = ''
 
-  console.log('timeString = ' + timeString)
-
   var matches = timeString.match(/(\d{1,2})\.(\d{1,2})(am|pm)/i)
   if (matches) {
     var hours = parseInt(matches[1], 10)
@@ -111,8 +109,6 @@ Date.prototype.parseTime = function(timeString) {
     date.setSeconds(0)
     date.setMilliseconds(0)
   }
-  
-  console.log('date = ' + date)
   
   return date;
 }
@@ -150,12 +146,9 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
   if (!_(departDate).isDate()) {
     departDate = new Date()    
   }
-  console.log('departDate = ' + departDate.toString())
   
   // add a minute to the departDate to only fetch journeys departing after that date
   //departDate.setMinutes(departDate.getMinutes() + 1)
-  
-  console.log('departDate = ' + departDate.toString())
   
   if (!_(limit).isNumber() || limit < 0) {
     // default to how many results translink return in a single search
