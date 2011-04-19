@@ -102,7 +102,8 @@ Date.prototype.parseTime = function(timeString) {
       , minutes = parseInt(matches[2], 10)
       , meridiem = matches[3]
     
-    if (hours >= 0 && hours <= 3) date.setDate(date.getDate() + 1);  // after midnight so add 1 day
+    if (meridiem.toLowerCase() === 'am' && hours >= 0 && hours <= 3) 
+      date.setDate(date.getDate() + 1);  // after midnight so add 1 day
     
     if (meridiem.toLowerCase() === 'pm' && hours < 12) hours += 12  
     date.setHours(hours)
