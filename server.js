@@ -257,7 +257,7 @@ app.get('/data/:origin/:destination.json', function(req, res) {
   var departDate = undefined
     , limit = undefined
   if (req.query.after) {
-    departDate = new Date.parse(req.query.after)
+    departDate = Date.parse(req.query.after)
     console.log('after = ' + JSON.stringify(departDate))
   }
   if (req.query.limit) {
