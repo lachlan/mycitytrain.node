@@ -382,7 +382,7 @@ Date.prototype.format = function() {
   if (this.getHours() === 0) hours = 12
   var minutes = this.getMinutes() < 10 ? '0' + this.getMinutes() : this.getMinutes()
   var meridiem = this.getHours() < 12 ? 'am' : 'pm'
-  return hours + ':' + minutes + meridiem
+  return hours + ':' + minutes + ' ' + meridiem
 }
 Date.__original_parse__ = Date.parse;
 Date.parse = function(other) {
