@@ -105,7 +105,7 @@ Date.prototype.parseTime = function(timeString) {
     else if (meridiem === 'pm' && hours < 12) 
       hours += 12
       
-    if (meridiem === 'am' && hours >= 0 && hours <= 3)
+    if (meridiem === 'am' && date.getHours() >= 12)
       date.setDate(date.getDate() + 1);  // after midnight so add 1 day
 
     date.setHours(hours)
