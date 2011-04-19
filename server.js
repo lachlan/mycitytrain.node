@@ -5,6 +5,8 @@ var express = require('express')
   , _ = require('underscore')
   
 var app = module.exports = express.createServer()
+  , locations = undefined
+  , translinkTimezoneOffset = -600 // Brisbane/Australia
 
 app.configure(function() {
   app.set('views', __dirname + '/views')
@@ -26,7 +28,6 @@ app.configure('production', function() {
   app.use(express.errorHandler())
 })
 
-var locations = undefined
 var fetchLocations = function(callback) {
   var options = {
         host: 'www.queenslandrail.com.au',
@@ -65,19 +66,35 @@ var getLocations = function(callback) {
   }
 }
 
+Date.prototype.toTimezone = function(targetOffset) {
+  var date = new Date(this)
+  if (_(targetOffset).isNumber()) date.setMinutes(date.getMinutes() + (date.getTimezoneOffset() - targetOffset))
+  return date;
+}
+
+Date.prototype.fromTimezone = function(sourceOffset) {
+  var date = new Date(this)
+  if (_(sourceOffset).isNumber()) date.setMinutes(date.getMinutes() + (sourceOffset - date.getTimezoneOffset()))
+  return date;
+}
+
 Date.prototype.midnight = function() {
-  var d = new Date(this.getTime());
-  d.setHours(0)
-  d.setMinutes(0)
-  d.setSeconds(0)
-  d.setMilliseconds(0)
-  return d;
+  var date = new Date(this)
+  date.setHours(0)
+  date.setMinutes(0)
+  date.setSeconds(0)
+  date.setMilliseconds(0)
+  return date;
 }
 
 Date.prototype.parseTime = function(timeString) {
-  timeString ? timeString = timeString.trim() : ''
-  var fromDate = this.midnight()
-  if (timeString.match(/\+$/)) fromDate.setDate(fromDate.getDate() + 1);  // after midnight so add 1 day
+  var date = new Date(this)
+  if (_(timeString).isString())
+    timeString.trim()
+  else
+    timeString = ''
+
+  console.log('timeString = ' + timeString)
 
   var matches = timeString.match(/(\d{1,2})\.(\d{1,2})(am|pm)/i)
   if (matches) {
@@ -85,21 +102,29 @@ Date.prototype.parseTime = function(timeString) {
       , minutes = parseInt(matches[2], 10)
       , meridiem = matches[3]
     
-    if (meridiem.toLowerCase() == 'pm' && hours < 12) hours += 12  
-    fromDate.setHours(hours)
-    fromDate.setMinutes(minutes)
+    if (hours >= 0 && hours <= 3) date.setDate(date.getDate() + 1);  // after midnight so add 1 day
+    
+    if (meridiem.toLowerCase() === 'pm' && hours < 12) hours += 12  
+    date.setHours(hours)
+    date.setMinutes(minutes)
+    date.setSeconds(0)
+    date.setMilliseconds(0)
   }
-  return fromDate;
+  
+  console.log('date = ' + date)
+  
+  return date;
 }
 
+Date.__original_parse__ = Date.parse;
 Date.parse = function(other) {
   var date = new Date()
-  if (_.isNumber(other)) {
+  if (_(other).isNumber()) {
     date.setTime(other)
-  } else if (_.isDate(other)) {
+  } else if (_(other).isDate()) {
     date = other
   } else if (_(other).isString()){
-    var matches = other.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).(\d{3})(Z)/)
+    var matches = other.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).(\d{3})(Z)/)  // ISO8601 datetime string
     if (matches) {
       var year = parseInt(matches[1], 10)
         , month = parseInt(matches[2], 10)
@@ -120,13 +145,16 @@ Date.parse = function(other) {
 }
 
 var fetchJourneys = function(origin, destination, departDate, limit, callback) {
-  if (!_(departDate).isDate()) {
-    departDate = new Date()
-  }
-  // add a minute to the departDate to only fetch journeys departing after that date
-  departDate = new Date(departDate.getTime() + (1000 * 60))
   
-  console.log('departDate = ' + departDate)
+  if (!_(departDate).isDate()) {
+    departDate = new Date()    
+  }
+  console.log('departDate = ' + departDate.toString())
+  
+  // add a minute to the departDate to only fetch journeys departing after that date
+  //departDate.setMinutes(departDate.getMinutes() + 1)
+  
+  console.log('departDate = ' + departDate.toString())
   
   if (!_(limit).isNumber() || limit < 0) {
     // default to how many results translink return in a single search
@@ -142,10 +170,10 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
         FromStation: origin
       , ToStation: destination
       , TimeSearchMode: 'DepartAt'
-      , SearchDate: ('' + departDate.getFullYear() + '-' + (departDate.getMonth() + 1) + '-' + departDate.getDate())
-      , SearchHour: departDate.getHours() <= 12 ? departDate.getHours() : departDate.getHours() - 12
-      , SearchMinute: departDate.getMinutes()
-      , TimeMeridiem: departDate.getHours() < 12 ? 'AM' : 'PM'
+      , SearchDate: ('' + departDate.toTimezone(translinkTimezoneOffset).getFullYear() + '-' + (departDate.toTimezone(translinkTimezoneOffset).getMonth() + 1) + '-' + departDate.toTimezone(translinkTimezoneOffset).getDate())
+      , SearchHour: departDate.toTimezone(translinkTimezoneOffset).getHours() <= 12 ? departDate.toTimezone(translinkTimezoneOffset).getHours() : departDate.toTimezone(translinkTimezoneOffset).getHours() - 12
+      , SearchMinute: departDate.toTimezone(translinkTimezoneOffset).getMinutes()
+      , TimeMeridiem: departDate.toTimezone(translinkTimezoneOffset).getHours() < 12 ? 'AM' : 'PM'
       })
 
   console.log('request data = ' + data)
@@ -180,13 +208,14 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
               $(body).find('#optionsTable tbody tr').each(function() {                
                 var tds = $(this).find('td.timetd')                
                 if (tds.length >= 2) {
-                  var departTime = departDate.parseTime($(tds[0]).html().trim())
-                    , arriveTime = departDate.parseTime($(tds[1]).html().trim())
+                  var departTime = departDate.parseTime($(tds[0]).html().trim()).fromTimezone(translinkTimezoneOffset)
+                    , arriveTime = departDate.parseTime($(tds[1]).html().trim()).fromTimezone(translinkTimezoneOffset)
                   journeys.push([departTime, arriveTime])
                 }
               })
               if (journeys.length === 0) {
-                departDate = new Date(departDate.midnight().getTime() + (24 * 60 * 60 * 1000))                
+                // if no journeys then try the next day from midnight 
+                departDate = new Date(departDate.midnight().toTimezone(translinkTimezoneOffset).getTime() + (24 * 60 * 60 * 1000))                
               } else {
                 departDate = new Date(journeys[journeys.length - 1][0])
               }
@@ -258,7 +287,7 @@ app.get('/data/:origin/:destination.json', function(req, res) {
     , limit = undefined
   if (req.query.after) {
     departDate = Date.parse(req.query.after)
-    console.log('after = ' + JSON.stringify(departDate))
+    console.log('after = ' + req.query.after)
   }
   if (req.query.limit) {
     limit = parseInt(req.query.limit, 10)
