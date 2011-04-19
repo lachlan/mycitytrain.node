@@ -250,7 +250,7 @@ app.get('/', function(req, res) {
 app.get('/cache.manifest', function(req, res) {
   // horrible but quick hack to return an HTML cache manifest with the correct mime type
   var manifest = "CACHE MANIFEST\n\
-# version 0.0.10\n\
+# version 0.0.11\n\
 /\n\
 /favicon.ico\n\
 /images/apple-touch-icon-114x114.png\n\
