@@ -148,7 +148,7 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
   }
   
   // add a minute to the departDate to only fetch journeys departing after that date
-  //departDate.setMinutes(departDate.getMinutes() + 1)
+  departDate.setMinutes(departDate.getMinutes() + 1)
   
   if (!_(limit).isNumber() || limit < 0) {
     // default to how many results translink return in a single search
