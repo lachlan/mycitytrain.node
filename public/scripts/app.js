@@ -615,7 +615,8 @@ $(function() {
         self.each(function(journey) {
           // trigger an update to the eta
           journey.change()
-          if (journey.get('departure') <= Date.now()) self.remove(journey)
+          // remove it if its departed or about to depart in less than a minute
+          if (journey.get('departure') <= (new Date(Date.now().getTime() + 59 * 1000))) self.remove(journey)
         })
         // after removing some services, automatically refresh the collection if its below its limit
         if (this.length < this.limit) 
