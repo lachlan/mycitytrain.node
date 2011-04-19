@@ -98,18 +98,21 @@ Date.prototype.parseTime = function(timeString) {
   if (matches) {
     var hours = parseInt(matches[1], 10)
       , minutes = parseInt(matches[2], 10)
-      , meridiem = matches[3]
-    
-    if (meridiem.toLowerCase() === 'am' && hours >= 0 && hours <= 3) 
+      , meridiem = matches[3].toLowerCase()
+        
+    if (meridiem === 'am' && hours === 12) 
+      hours = 0 // if translink returns 12am, so set the hour to 0
+    else if (meridiem === 'pm' && hours < 12) 
+      hours += 12
+      
+    if (meridiem === 'am' && hours >= 0 && hours <= 3)
       date.setDate(date.getDate() + 1);  // after midnight so add 1 day
-    
-    if (meridiem.toLowerCase() === 'pm' && hours < 12) hours += 12  
+
     date.setHours(hours)
     date.setMinutes(minutes)
     date.setSeconds(0)
     date.setMilliseconds(0)
   }
-  
   return date;
 }
 
@@ -247,7 +250,7 @@ app.get('/', function(req, res) {
 app.get('/cache.manifest', function(req, res) {
   // horrible but quick hack to return an HTML cache manifest with the correct mime type
   var manifest = "CACHE MANIFEST\n\
-# version 0.0.9\n\
+# version 0.0.10\n\
 /\n\
 /favicon.ico\n\
 /images/apple-touch-icon-114x114.png\n\
