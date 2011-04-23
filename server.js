@@ -275,6 +275,8 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
 
 // Routes
 app.get('/', function(req, res) {
+  var oneYear = 31557600000;
+  res.header('Cache-Control', 'public; max-age=' + oneYear)
   res.render('index', {
     title: 'MyCitytrain'
   })
@@ -307,7 +309,8 @@ NETWORK:\n\
 
 app.get('/data/locations.json', function(req, res) {
   getLocations(function(locations) {
-    res.header('Cache-Control', 'public; max-age=604800') // let the client cache the response for a week
+    var oneWeek = 604800;
+    res.header('Cache-Control', 'public; max-age=' + oneWeek) // let the client cache the response for a week
     res.send(locations)
   })
 })
