@@ -335,7 +335,7 @@ app.get('/data/:origin/:destination.json', function(req, res) {
       // cache the response until the first journey in the list departs
       var now = new Date()
       var firstDeparting = new Date(journeys[0][0])
-      var maxAge = parseInt((firstDeparting - now) / 1000, 10)
+      var maxAge = parseInt((firstDeparting.getTime() - now.getTime()) / 1000, 10) - 59
       if (maxAge < 0) maxAge = 0
       res.header('Cache-Control', 'public; max-age=' + maxAge) 
       res.send(journeys)
