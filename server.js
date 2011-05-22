@@ -245,7 +245,7 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
               })
               if (journeys.length === 0) {
                 // if no journeys then try the next day from midnight 
-                departDate = new Date(departDate.midnight().toTimezone(translinkTimezoneOffset).getTime() + (24 * 60 * 60 * 1000))                
+                departDate = new Date(departDate.midnight().fromTimezone(translinkTimezoneOffset).getTime() + (24 * 60 * 60 * 1000))                
               } else {
                 departDate = new Date(journeys[journeys.length - 1][0])
               }
