@@ -1,0 +1,12 @@
+{
+  "name": "mycitytrain.node",
+  "version": "0.0.1",
+  "dependencies": {
+    "express": "2.2.0",
+    "jade": "0.10.4",
+    "jquery": "1.5.1",
+    "less": "1.0.41",
+    "qs": "0.0.7",
+    "underscore": "1.1.5"
+  }
+}
