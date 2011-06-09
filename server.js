@@ -199,7 +199,7 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
     , data = qs.encode({
         FromStation: origin
       , ToStation: destination
-      , TimeSearchMode: 'DepartAt'
+      , TimeSearchMode: 'LeaveAfter'
       , SearchDate: ('' + departDate.toTimezone(translinkTimezoneOffset).getFullYear() + '-' + (departDate.toTimezone(translinkTimezoneOffset).getMonth() + 1) + '-' + departDate.toTimezone(translinkTimezoneOffset).getDate())
       , SearchHour: departDate.toTimezone(translinkTimezoneOffset).getHours() <= 12 ? departDate.toTimezone(translinkTimezoneOffset).getHours() : departDate.toTimezone(translinkTimezoneOffset).getHours() - 12
       , SearchMinute: departDate.toTimezone(translinkTimezoneOffset).getMinutes()
