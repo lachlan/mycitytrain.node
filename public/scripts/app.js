@@ -142,7 +142,7 @@ $(function() {
     to = $(to)
 
     var effect = from.attr('data-fx');
-    if (_.isEmpty(effect)) effect = 'fx fade'; //default effect
+    if (_.isEmpty(effect)) effect = 'fx slideup reverse'; //default effect
     from.removeAttr('data-fx');
 
     $(':focus').blur();
@@ -464,6 +464,11 @@ $(function() {
   , className: 'page'
   , initialize: function() {
       _(this).bindAll('render')
+      if (!_(this.collection).isUndefined()) {
+        this.collection.bind('add', this.render)
+        this.collection.bind('refresh', this.render)
+        this.collection.bind('remove', this.render)
+      }
     }
   , render: function() {
       $(this.el).empty()
@@ -542,13 +547,11 @@ $(function() {
           count++
         }
       })
-      if (changed || count < self.collection.length) {
-        self.collection.refresh(models)    
-        self.collection.save()
-        window.location = '/' // reload the app?
-      } else {
-        history.back()
-      }
+      self.collection.refresh(models)    
+      self.collection.save()
+      // is there a way to save the last journey being looked at so it can be returned to?
+      if (this.collection.length > 0)
+        window.location.hash = this.collection.first().url(false)
       e.preventDefault()
     }    
   });
@@ -620,33 +623,36 @@ $(function() {
     tagName: 'div'
   , id: 'favourites'  
   , initialize: function(options) {
-      var self = this
-      self.collection.bind('refresh', self.render)
-      self.collection.bind('add', self.add)
-      self.collection.bind('remove', self.remove)
-
-      self.partials = self.collection.map(function(item) {
-        return new App.Views.Favourite({ model: item, id: item.cid, collection: self.collection })
-      })
-      self.partials = self.partials.concat(self.collection.inverse().map(function(item) {
-        return new App.Views.Favourite({ model: item, id: item.cid, collection: self.collection.inverse(), inverse: true })
-      }))
+      _(this).bindAll('render')    
+      this.collection.bind('refresh', this.render)
+      this.collection.bind('add', this.render)
+      this.collection.bind('remove', this.render)
     }
   , render: function() {
       var self = this
+        , partials = this.partials()
+        
       $(self.el).empty()
-      _(self.partials).each(function(partial) {
+      _(partials).each(function(partial) {
         $(self.el).append(partial.render().el)
       })
+      
+      // list of favourites might've changed, so fetch journeys
+      $('button:not(.disabled)').addClass('expire-only').click()
       return self    
     }
-  , add: function(item) {
-      //this.partials.push(new App.Views.Favourite({ model: item, id: item.cid collection: this.collection }))
-      //this.partials.push(new App.Views.Favourite({ model: item.inverse, id: item.inverse.cid collection: this.collection.inverse() }))
-      //this.render()
-    }
-  , remove: function(item) {
-      $(this.el).remove('#' + item.cid)
+  , partials: function() {
+      var self = this
+        , list = undefined
+        
+      list = self.collection.map(function(item) {
+        return new App.Views.Favourite({ model: item, id: item.cid, collection: self.collection })
+      })
+      list = list.concat(self.collection.inverse().map(function(item) {
+        return new App.Views.Favourite({ model: item, id: item.cid, collection: self.collection.inverse(), inverse: true })
+      }))
+    
+      return list
     }
   })
   
@@ -694,22 +700,30 @@ $(function() {
       $('body').append(element)
     }
   , root: function() {
-      var hash = '/settings' // redirect to settings when no favourites exist
-      if (this.collection.length > 0) hash = this.collection.first().url(false)
-      window.location.hash = hash
+      // redirect to first favourite in list, or redirect to settings when no favourites exist
+      window.location.hash = (this.collection.length > 0) ? this.collection.first().url(false) : '/settings'
     }
   , journey: function(origin, destination) {
       origin = origin.unescape().toTitleCase()
       destination = destination.unescape().toTitleCase()
-      var self = this
-        , match = function(item) {
+      var match = function(item) {
             return _(origin).isEqual(item.get('origin')) && _(destination).isEqual(item.get('destination'))
           }
-        , item = self.collection.find(match)
+        , item = this.collection.find(match) || this.collection.inverse().find(match)
       
-      if (_(item).isUndefined()) item = self.collection.inverse().find(match)
-      var element = $('#' + item.cid)
-      transition(element)
+      if (_(item).isUndefined()) {
+        // if the journey isn't already a favourite, add it to the favourites automatically and then display it
+        if (this.collection.length < 7) {
+          this.collection.add({ origin: origin, destination: destination })
+          this.collection.save()
+          item = this.collection.find(match)
+          transition($('#' + item.cid))
+        } else {
+          window.location.hash = '/settings'
+        }
+      } else {
+        transition($('#' + item.cid))        
+      }
     }
   })
   
@@ -718,7 +732,6 @@ $(function() {
   , locations: new App.Models.Locations()
   , initialize: function() {
       this.favourites.fetch()
-      //this.locations.fetch()
 
       var about = new App.Controllers.About()
         , settings = new App.Controllers.Settings({ collection: this.favourites, locations: this.locations })
@@ -735,7 +748,6 @@ $(function() {
       	}
       })
 
-      var self = this
       var run = function() {
         $('button:not(.disabled)').addClass('expire-only').click()
         window.setTimeout(run, (Date.now().next('minute') - Date.now()))
