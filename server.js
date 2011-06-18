@@ -19,7 +19,7 @@ app.configure(function() {
   app.use(express.methodOverride())
   app.use(express.compiler({ src: __dirname + '/public', enable: ['less'] }))
   app.use(app.router)
-  app.use(express.logger({ format: ':method :uri' }));
+  app.use(express.logger());
 })
 
 app.configure('development', function() {
@@ -206,8 +206,6 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
       , TimeMeridiem: departDate.toTimezone(translinkTimezoneOffset).getHours() < 12 ? 'AM' : 'PM'
       })
 
-  console.log('request data = ' + data)
-
   // post form to translink web site to get a list of journeys
   var request = http.request({
     host: host
@@ -275,8 +273,6 @@ var fetchJourneys = function(origin, destination, departDate, limit, callback) {
 
 // Routes
 app.get('/', function(req, res) {
-  var oneYear = 31557600000;
-  res.header('Cache-Control', 'public; max-age=' + oneYear)
   res.render('index', {
     title: 'MyCitytrain'
   })
@@ -323,11 +319,9 @@ app.get('/data/:origin/:destination.json', function(req, res) {
 
   if (req.query.after) {
     departDate = Date.parse(req.query.after)
-    console.log('after = ' + req.query.after)
   }
   if (req.query.limit) {
     limit = parseInt(req.query.limit, 10)
-    console.log('limit = ' + limit)
   }
   
   fetchJourneys(aliases[origin] || origin, aliases[destination] || destination, departDate, limit, function(journeys) {
@@ -335,9 +329,10 @@ app.get('/data/:origin/:destination.json', function(req, res) {
       // cache the response until the first journey in the list departs
       var now = new Date()
       var firstDeparting = new Date(journeys[0][0])
-      var maxAge = parseInt((firstDeparting.getTime() - now.getTime()) / 1000, 10) - 59
-      if (maxAge < 0) maxAge = 0
-      res.header('Cache-Control', 'public; max-age=' + maxAge) 
+      var maxAge = (parseInt((firstDeparting.getTime() - now.getTime()) / 60000, 10) - 1) * 60
+      if (maxAge > 0) {
+        res.header('Cache-Control', 'public; max-age=' + maxAge)  
+      }
       res.send(journeys)
     } else {
       res.send(500) // something went wrong :-(      
