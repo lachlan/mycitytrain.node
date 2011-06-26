@@ -1,8 +1,11 @@
 var express = require('express')
   , site = require('./site')
+  , mime = require('mime')  
   , app = module.exports = express.createServer();
 
 // configuration
+mime.define({'text/cache-manifest': ['manifest']});
+
 app.configure(function() {
   app.set('views', __dirname + '/views')
   app.set('view engine', 'jade')
@@ -26,7 +29,6 @@ app.configure('production', function() {
 
 // routes
 app.get('/', site.index);
-app.get('/cache.manifest', site.manifest);
 app.get('/data/locations.json', site.locations);
 app.get('/data/:origin/:destination.json', site.journeys);
 

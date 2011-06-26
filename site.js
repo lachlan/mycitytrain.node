@@ -6,31 +6,6 @@ exports.index = function(req, res) {
   });
 };
 
-exports.manifest = function(req, res) {
-  // horrible but quick hack to return an HTML cache 
-  // manifest with the correct mime type
-  var manifest = "CACHE MANIFEST\n\
-# version 0.0.13\n\
-/\n\
-/favicon.ico\n\
-/images/apple-touch-icon-114x114.png\n\
-/images/apple-touch-icon-72x72.png\n\
-/images/apple-touch-icon-57x57.png\n\
-/images/background_4x1.png\n\
-/images/drop_shadow_1x10.png\n\
-/images/sprites.png\n\
-/images/startup-320x460.png\n\
-/scripts/app.js\n\
-/styles/app.css\n\
-/styles/effects.css\n\
-\n\
-NETWORK:\n\
-/data"
-
-  res.header('Content-Type', 'text/cache-manifest');
-  res.end(manifest);
-}
-
 exports.locations = function(req, res) {
   var sendResponse = function(locations) {
     var oneWeek = 604800;
