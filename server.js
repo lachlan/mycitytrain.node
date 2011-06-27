@@ -1,5 +1,5 @@
 var express = require('express')
-  , site = require('./site')
+  , site = require('./app')
   , mime = require('mime')  
   , app = module.exports = express.createServer();
 
