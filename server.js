@@ -1,39 +1,39 @@
 var express = require('express')
-  , site = require('./app')
+  , app = require('./app')
   , mime = require('mime')  
-  , app = module.exports = express.createServer();
+  , server = module.exports = express.createServer();
 
 // configuration
 mime.define({'text/cache-manifest': ['manifest']});
 
-app.configure(function() {
-  app.set('views', __dirname + '/views')
-  app.set('view engine', 'jade')
-  app.use(express.bodyParser())
-  app.use(express.methodOverride())
-  app.use(express.compiler({ src: __dirname + '/public', enable: ['less'] }))
-  app.use(app.router)
-  app.use(express.logger());
+server.configure(function() {
+  server.set('views', __dirname + '/views')
+  server.set('view engine', 'jade')
+  server.use(express.bodyParser())
+  server.use(express.methodOverride())
+  server.use(express.compiler({ src: __dirname + '/public', enable: ['less'] }))
+  server.use(server.router)
+  server.use(express.logger());
 })
 
-app.configure('development', function() {
-  app.use(express.static(__dirname + '/public'))
-  app.use(express.errorHandler({ dumpExceptions: true, showStack: true }))
+server.configure('development', function() {
+  server.use(express.static(__dirname + '/public'))
+  server.use(express.errorHandler({ dumpExceptions: true, showStack: true }))
 })
 
-app.configure('production', function() {
+server.configure('production', function() {
   var oneYear = 31557600000;
-  app.use(express.static(__dirname + '/public', { maxAge : oneYear }))
-  app.use(express.errorHandler())
+  server.use(express.static(__dirname + '/public', { maxAge : oneYear }))
+  server.use(express.errorHandler())
 })
 
 // routes
-app.get('/', site.index);
-app.get('/data/locations.json', site.locations);
-app.get('/data/:origin/:destination.json', site.journeys);
+server.get('/', app.index);
+server.get('/data/locations.json', app.locations);
+server.get('/data/:origin/:destination.json', app.journeys);
 
 // boot the app
 if (!module.parent) {
-  app.listen(process.env.PORT || 3000)
-  console.log("Express server listening on port %d", app.address().port)
+  server.listen(process.env.PORT || 3000)
+  console.log("Express server listening on port %d", server.address().port)
 }
