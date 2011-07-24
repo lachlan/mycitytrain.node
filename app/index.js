@@ -18,20 +18,21 @@ exports.locations = function(req, res) {
 };
 
 exports.journeys = function(req, res) {
-  var departDate = undefined
-    , limit = undefined
-    , origin = req.params.origin.unescape().toTitleCase()
-    , destination = req.params.destination.unescape().toTitleCase();
+  var departDate = undefined,
+      limit = undefined,
+      origin = req.params.origin.unescape().toTitleCase(),
+      destination = req.params.destination.unescape().toTitleCase();
 
   if (req.query.after) departDate = Date.parse(req.query.after);
   if (req.query.limit) limit = parseInt(req.query.limit, 10);
   
   var sendResponse = function(journeys) {
     if (journeys) {
-      // cache the response until the first journey in the list departs
-      var now = new Date();
-      var firstDeparting = new Date(journeys[0][0]);
-      var maxAge = (parseInt((firstDeparting.getTime() - now.getTime()) / 60000, 10) - 1) * 60;
+      var now = new Date(),
+          firstDeparting = new Date(journeys[0][0]),
+          maxAge = (parseInt((firstDeparting.getTime() - now.getTime()) / 60000, 10) - 1) * 60;
+
+      // cache the response until the first journey in the list departs          
       if (maxAge > 0) res.header('Cache-Control', 'public; max-age=' + maxAge);
       res.send(journeys);
     } else {
