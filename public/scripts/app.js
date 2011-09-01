@@ -546,8 +546,8 @@ $(function() {
           count = 0;
       
       self.$('form li').each(function() {
-        var origin = $(this).find('input.origin').attr('value').trim().toTitleCase(),
-            destination = $(this).find('input.destination').attr('value').trim().toTitleCase();
+        var origin = $.trim($(this).find('input.origin').attr('value').toTitleCase()),
+            destination = $.trim($(this).find('input.destination').attr('value').toTitleCase());
         
         if (!_(origin).isEmpty() && !_(destination).isEmpty()) {
           var favourite = self.collection.find(function(item) {
