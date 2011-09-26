@@ -17,6 +17,15 @@ html
     script(src='http://cdnjs.cloudflare.com/ajax/libs/backbone.js/0.5.1/backbone-min.js')
     script(src='/scripts/jquery.cookie.min.js')
     script(src='/scripts/app.min.js?2011-09-01')
+    script(type='text/javascript')
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-6816538-2']);
+        _gaq.push(['_trackPageview']);
+        (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
     script(id='header-template', type='text/template')
       | <h1>MyCitytrain</h1>
       | <a id='header-right-button' class='back reverse slideup fx' href='#'>Done</a>
