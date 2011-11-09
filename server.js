@@ -1,4 +1,4 @@
-var express = require('express')
+var express = require('express'),
     app = require('./app'),
     mime = require('mime'), 
     server = module.exports = express.createServer();
