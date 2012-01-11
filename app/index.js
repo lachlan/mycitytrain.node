@@ -28,12 +28,6 @@ exports.journeys = function(req, res) {
   
   var sendResponse = function(journeys) {
     if (journeys) {
-      var now = new Date(),
-          firstDeparting = new Date(journeys[0][0]),
-          maxAge = (parseInt((firstDeparting.getTime() - now.getTime()) / 60000, 10) - 1) * 60;
-
-      // cache the response until the first journey in the list departs          
-      if (maxAge > 0) res.header('Cache-Control', 'public; max-age=' + maxAge);
       res.send(journeys);
     } else {
       res.send(500); // something went wrong :-(      
