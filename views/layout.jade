@@ -61,13 +61,13 @@ html
       |   <%= eta %>
       | </span>
       | <p class='origin'>
+      |   <% if (originPlatform && originPlatform > 0) { %><span class='platform'>P<%= originPlatform %></span><% } %>
       |   <span class='location'><%= origin %></span> 
-      |   <span class='platform'>P<%= originPlatform %></span> 
       |   <span class='time'><%= departure.format().toLowerCase() %></span>
       | </p>
       | <p class='destination'>
-      |   <span class='platform'>P<%= destinationPlatform %></span> 
       |   <span class='location'><%= destination %></span> 
+      |   <% if (destinationPlatform && destinationPlatform > 0) { %><span class='platform'>P<%= destinationPlatform %></span><% } %>
       |   <span class='time'><%= arrival.format().toLowerCase() %></span>
       | </p>
     script(id='load-template', type='text/template')
