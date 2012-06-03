@@ -1,7 +1,8 @@
 var http = require('http'),
-    qs = require('querystring'),
     $ = require('jquery'),
     _ = require('underscore'),
+    Browser = require('zombie'),
+    moment = require('moment'),
     locations = undefined,
     translinkTimezoneOffset = -600, // Brisbane/Australia
     aliases = {
@@ -174,14 +175,22 @@ exports.getLocations = function(callback) {
 };
 
 var getJourneys = function(origin, destination, departDate, limit, callback) {
-  
-  if (!_(departDate).isDate()) {
-    departDate = new Date();
+  if (_(departDate).isDate()) {
+    departDate = moment(departDate);
+  } else {
+    departDate = moment();
   }
   
   // add a minute to the departDate to only fetch journeys departing after that date
-  departDate.setMinutes(departDate.getMinutes() + 1);
-  
+  departDate.add("minutes", 1);
+
+  // round to the next nearest 5 minute mark, because that's all the translink journey planner supports
+  var remainder = departDate.minutes() % 5;
+  if (remainder > 0) departDate.add("minutes", 5 - remainder);
+
+  // convert to translink timezone
+  var translinkDate = moment(departDate.toDate().toTimezone(translinkTimezoneOffset));
+
   if (!_(limit).isNumber() || limit < 0) {
     // default to how many results translink return in a single search
     limit = 4;
@@ -189,84 +198,70 @@ var getJourneys = function(origin, destination, departDate, limit, callback) {
     // otherwise just make sure we've got an integer
     limit = Math.floor(limit);
   }
-    
-  var host = 'jp.translink.com.au',
-      port = 80,
-      data = qs.encode({
-        FromStation: origin,
-        ToStation: destination,
-        TimeSearchMode: 'LeaveAfter',
-        SearchDate: ('' + departDate.toTimezone(translinkTimezoneOffset).getFullYear() + '-' + (departDate.toTimezone(translinkTimezoneOffset).getMonth() + 1) + '-' + departDate.toTimezone(translinkTimezoneOffset).getDate()),
-        SearchHour: departDate.toTimezone(translinkTimezoneOffset).getHours() <= 12 ? departDate.toTimezone(translinkTimezoneOffset).getHours() : departDate.toTimezone(translinkTimezoneOffset).getHours() - 12,
-        SearchMinute: departDate.toTimezone(translinkTimezoneOffset).getMinutes(),
-        TimeMeridiem: departDate.toTimezone(translinkTimezoneOffset).getHours() < 12 ? 'AM' : 'PM'
-      }),
-      options = {
-        host: host,
-        port: port,
-        path: '/travel-information/journey-planner/train-planner',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-      };
 
-  // post form to translink web site to get a list of journeys
-  var request = http.request(options, function(response) {
-    response.on('end', function() {
-      if (response.statusCode == 302) {
-        // redirect expected from translink
-        var options = {
-          host: host,
-          port: port,
-          path: response.headers['location'],
-          method: 'GET',
-          headers: { cookie: response.headers['set-cookie'] }
-        };
-        
-        http.get(options, function(res) {
-          res.setEncoding('utf8');
-          var body = '';
-          res.on('data', function(data) { 
-            body += data;
-          });
-          res.on('end', function() {            
-            if (res.statusCode == 200) {
-              var journeys = [];
-              $(body).find('#optionsTable tbody tr').each(function() {                
-                var tds = $(this).find('td.timetd');     
-                if (tds.length >= 2) {
-                  var departTime = departDate.parseTime($(tds[0]).html().trim()).fromTimezone(translinkTimezoneOffset),
-                      arriveTime = departDate.parseTime($(tds[1]).html().trim()).fromTimezone(translinkTimezoneOffset);
-                  journeys.push([departTime, arriveTime]);
-                }
-              });
-              if (journeys.length === 0) {
-                // if no journeys then try the next day from midnight 
-                departDate = new Date(departDate.midnight().fromTimezone(translinkTimezoneOffset).getTime() + (24 * 60 * 60 * 1000));
-              } else {
-                departDate = new Date(journeys[journeys.length - 1][0]);
-              }
-              if (journeys.length < limit) {
-                // go get some more journeys from translink until we've reached the requested limit
-                getJourneys(origin, destination, departDate, limit - journeys.length, function(results) {
-                  callback(journeys.concat(results));
-                });
-              } else {
-                journeys.length = limit; // truncate array to required limit
-                callback(journeys);
-              }
+  var journeys = [];
+  var platformPattern = new RegExp("^(.+)(\\d+)");
+  var browser = new Browser({ debug: true, runScripts: false });
+
+  console.info("Search: " + origin + '..' + destination + ' > ' + departDate.format());
+
+  browser.visit("http://jp.translink.com.au/travel-information/journey-planner", function (err) {
+    if (browser.success) {
+      browser.fill("Start", origin + " Station")
+        .fill("End", destination + " Station")
+        .choose("TimeSearchMode", "LeaveAfter")
+        .check("TransportModes", "Train")
+        .uncheck("TransportModes", "Bus")
+        .uncheck("TransportModes", "Ferry")
+        .select("SearchDate", translinkDate.format('D/MM/YYYY') + ' 12:00:00 AM')
+        .select("SearchHour", translinkDate.format('h'))
+        .select("SearchMinute", translinkDate.format('m'))
+        .select("TimeMeridiem", translinkDate.format('a'))
+        .pressButton("Find journey", function(err) {
+          if (browser.success) { 
+            var html = $(browser.body);
+            var times = html.find('.itinerary .train .option-detail li > b');
+            var departTime = moment(translinkDate.format('YYYY-MM-DD') + ' ' + times.eq(0).text() + ' +10:00', 'YYYY-MM-DD h:mma Z');
+            var arriveTime = moment(translinkDate.format('YYYY-MM-DD') + ' ' + times.eq(1).text() + ' +10:00', 'YYYY-MM-DD h:mma Z');
+            console.info("Journey: departing " + origin + ' ' + departTime.format() + ' arriving ' + destination + ' ' + arriveTime.format());
+
+            journeys.push({
+              origin: {
+                station: origin,
+                platform: parseInt(html.find('.itinerary .train .option-detail li > a').eq(0).text().replace(platformPattern, "$2"), 10),
+                datetime: moment(departTime).toDate()
+              },
+              destination: {
+                station: destination,
+                platform: parseInt(html.find('.itinerary .train .option-detail li > a').eq(1).text().replace(platformPattern, "$2"), 10),
+                datetime: moment(arriveTime).toDate()
+              },
+            });
+
+            if (journeys.length === 0) {
+              // if no journeys then try the next day from midnight 
+              departDate = moment(departDate.format('YYYY-MM-DD') + 'T00:00:00' + departDate.format('Z')).add("days", 1).toDate()
             } else {
-              callback();
+              departDate = moment(departTime).toDate();
             }
-          });
+
+            if (journeys.length < limit) {
+              // get more journeys from translink until we've reached the requested limit
+              getJourneys(origin, destination, departDate, limit - journeys.length, function(err, results) {
+                callback(err, journeys.concat(results));
+              });
+            } else {
+              journeys.length = limit; // truncate array to required limit
+              callback(undefined, journeys);
+            }
+          } else {
+            callback(err, journeys);
+          }
         });
-      } else {
-        // unexpected response from translink
-        callback();
-      }
-    });
+    } else {
+      callback(err, journeys);
+    }
   });
-  request.write(data);
-  request.end();
 }
 
 exports.getJourneys = getJourneys;

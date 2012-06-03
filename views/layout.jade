@@ -10,13 +10,13 @@ html
     link(href='/images/apple-touch-icon-57x57.png', rel='apple-touch-icon')
     link(href='/images/apple-touch-icon-72x72.png', rel='apple-touch-icon', sizes='72x72')
     link(href='/images/apple-touch-icon-114x114.png', rel='apple-touch-icon', sizes='114x114')
-    link(href='/styles/app.css', media='all', rel='stylesheet')
+    link(href='/styles/app.css?v=2012-06-03', media='all', rel='stylesheet')
     script(src='http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js')
     script(src='http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js')
     script(src='http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.1.6/underscore-min.js')
     script(src='http://cdnjs.cloudflare.com/ajax/libs/backbone.js/0.5.1/backbone-min.js')
     script(src='/scripts/jquery.cookie.min.js')
-    script(src='/scripts/app.min.js?2011-09-01')
+    script(src='/scripts/app.min.js?v=2012-06-03')
     script(id='header-template', type='text/template')
       | <h1>MyCitytrain</h1>
       | <a id='header-right-button' class='back reverse slideup fx' href='#'>Done</a>
@@ -62,9 +62,11 @@ html
       | </span>
       | <p class='origin'>
       |   <span class='location'><%= origin %></span> 
+      |   <span class='platform'>P<%= originPlatform %></span> 
       |   <span class='time'><%= departure.format().toLowerCase() %></span>
       | </p>
       | <p class='destination'>
+      |   <span class='platform'>P<%= destinationPlatform %></span> 
       |   <span class='location'><%= destination %></span> 
       |   <span class='time'><%= arrival.format().toLowerCase() %></span>
       | </p>

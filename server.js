@@ -29,8 +29,11 @@ server.configure('production', function() {
 
 // routes
 server.get('/', app.index);
+server.get('/api/locations.json', app.locations);
+server.get('/api/:origin/:destination.json', app.journeys);
+// deprecated routes
 server.get('/data/locations.json', app.locations);
-server.get('/data/:origin/:destination.json', app.journeys);
+server.get('/data/:origin/:destination.json', app.journeys_DEPRECATED);
 
 // boot the app
 if (!module.parent) {

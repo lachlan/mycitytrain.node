@@ -191,7 +191,7 @@ $(function() {
   
   App.Models.Locations = Backbone.Collection.extend({
     model: App.Models.Location,
-    url: '/data/locations.json',
+    url: '/api/locations.json',
     
     parse: function(response) {
       var self = this;
@@ -273,7 +273,7 @@ $(function() {
     
     url: function(limit) {
       if (_(limit).isUndefined()) limit = this.limit;
-      return ('/data/' + this.origin.escape() + '/' + this.destination.escape() + '.json?limit=' + limit).toLowerCase();
+      return ('/api/' + this.origin.escape() + '/' + this.destination.escape() + '.json?limit=' + limit).toLowerCase();
     },
     
     parse: function(response) {
@@ -281,9 +281,11 @@ $(function() {
       return _(response).map(function(row) {
         return { 
           origin: self.origin,
+          originPlatform: row.origin.platform,
           destination: self.destination,
-          departure: row[0],
-          arrival: row[1]
+          destinationPlatform: row.destination.platform,
+          departure: row.origin.datetime,
+          arrival: row.destination.datetime
         }
       });
     },
