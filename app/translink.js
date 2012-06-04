@@ -193,7 +193,7 @@ var getJourneys = function(origin, destination, departDate, limit, callback) {
 
   if (!_(limit).isNumber() || limit < 0) {
     // default to how many results translink return in a single search
-    limit = 4;
+    limit = 1;
   } else {
     // otherwise just make sure we've got an integer
     limit = Math.floor(limit);
@@ -221,33 +221,28 @@ var getJourneys = function(origin, destination, departDate, limit, callback) {
           if (browser.success) { 
             var html = $(browser.body);
             var times = html.find('.itinerary .train .option-detail li > b');
-            var departTime = moment(translinkDate.format('YYYY-MM-DD') + ' ' + times.eq(0).text() + ' +10:00', 'YYYY-MM-DD h:mma Z');
-            var arriveTime = moment(translinkDate.format('YYYY-MM-DD') + ' ' + times.eq(1).text() + ' +10:00', 'YYYY-MM-DD h:mma Z');
-            console.info("Journey: departing " + origin + ' ' + departTime.format() + ' arriving ' + destination + ' ' + arriveTime.format());
+            if (times.length >= 2) {
+              var departTime = moment(translinkDate.format('YYYY-MM-DD') + ' ' + times.eq(0).text() + ' +10:00', 'YYYY-MM-DD h:mma Z');
+              var arriveTime = moment(translinkDate.format('YYYY-MM-DD') + ' ' + times.eq(1).text() + ' +10:00', 'YYYY-MM-DD h:mma Z');
+              console.info("Journey: departing " + origin + ' ' + departTime.format() + ' arriving ' + destination + ' ' + arriveTime.format());
 
-            journeys.push({
-              origin: {
-                station: origin,
-                platform: parseInt(html.find('.itinerary .train .option-detail li > a').eq(0).text().replace(platformPattern, "$2"), 10),
-                datetime: moment(departTime).toDate()
-              },
-              destination: {
-                station: destination,
-                platform: parseInt(html.find('.itinerary .train .option-detail li > a').eq(1).text().replace(platformPattern, "$2"), 10),
-                datetime: moment(arriveTime).toDate()
-              },
-            });
-
-            if (journeys.length === 0) {
-              // if no journeys then try the next day from midnight 
-              departDate = moment(departDate.format('YYYY-MM-DD') + 'T00:00:00' + departDate.format('Z')).add("days", 1).toDate()
-            } else {
-              departDate = moment(departTime).toDate();
+              journeys.push({
+                origin: {
+                  station: origin,
+                  platform: parseInt(html.find('.itinerary .train .option-detail li > a').eq(0).text().replace(platformPattern, "$2"), 10),
+                  datetime: moment(departTime).toDate()
+                },
+                destination: {
+                  station: destination,
+                  platform: parseInt(html.find('.itinerary .train .option-detail li > a').eq(1).text().replace(platformPattern, "$2"), 10),
+                  datetime: moment(arriveTime).toDate()
+                },
+              });
             }
 
             if (journeys.length < limit) {
               // get more journeys from translink until we've reached the requested limit
-              getJourneys(origin, destination, departDate, limit - journeys.length, function(err, results) {
+              getJourneys(origin, destination, moment(departTime).toDate(), limit - journeys.length, function(err, results) {
                 callback(err, journeys.concat(results));
               });
             } else {
