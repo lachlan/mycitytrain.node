@@ -174,7 +174,7 @@ exports.getLocations = function(callback) {
   }
 };
 
-var getJourneys = function(origin, destination, departDate, limit, callback) {
+var getJourneys = function(origin, destination, departDate, callback) {
   if (_(departDate).isDate()) {
     departDate = moment(departDate);
   } else {
@@ -190,14 +190,6 @@ var getJourneys = function(origin, destination, departDate, limit, callback) {
 
   // convert to translink timezone
   var translinkDate = moment(departDate.toDate().toTimezone(translinkTimezoneOffset));
-
-  if (!_(limit).isNumber() || limit < 0) {
-    // default to how many results translink return in a single search
-    limit = 1;
-  } else {
-    // otherwise just make sure we've got an integer
-    limit = Math.floor(limit);
-  }
 
   var journeys = [];
   var platformPattern = new RegExp("^(.+)(\\d+)");
@@ -240,15 +232,7 @@ var getJourneys = function(origin, destination, departDate, limit, callback) {
               });
             }
 
-            if (journeys.length < limit) {
-              // get more journeys from translink until we've reached the requested limit
-              getJourneys(origin, destination, moment(departTime).toDate(), limit - journeys.length, function(err, results) {
-                callback(err, journeys.concat(results));
-              });
-            } else {
-              journeys.length = limit; // truncate array to required limit
-              callback(undefined, journeys);
-            }
+            callback(journeys.length === 0, journeys);
           } else {
             callback(err, journeys);
           }

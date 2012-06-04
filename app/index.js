@@ -24,7 +24,6 @@ exports.journeys = function(req, res, next, callback) {
       destination = req.params.destination.unescape().toTitleCase();
 
   if (req.query.after) departDate = Date.parse(req.query.after);
-  if (req.query.limit) limit = parseInt(req.query.limit, 10);
   
   if (!callback) {
     callback = function(err, journeys) {
@@ -36,7 +35,7 @@ exports.journeys = function(req, res, next, callback) {
     };
   }
 
-  translink.getJourneys(origin, destination, departDate, limit, callback);
+  translink.getJourneys(origin, destination, departDate, callback);
 };
 
 exports.journeys_DEPRECATED = function(req, res, next) {
