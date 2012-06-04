@@ -232,7 +232,7 @@ var getJourneys = function(origin, destination, departDate, callback) {
               });
             }
 
-            callback(journeys.length === 0, journeys);
+            callback(journeys.length === 0 ? new Error("Journey not found") : undefined, journeys);
           } else {
             callback(err, journeys);
           }
