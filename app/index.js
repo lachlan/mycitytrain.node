@@ -7,11 +7,22 @@ exports.index = function(req, res, next) {
 };
 
 exports.locations = function(req, res, next) {
-  var sendResponse = function(locations) {
-    var oneWeek = 604800;
-    // let the client cache the response for a week
-    res.header('Cache-Control', 'public; max-age=' + oneWeek);
-    res.send(locations);
+  var sendResponse = function(error, locations) {
+    if (error) {
+      res.send(500, error); // something went wrong :-(    
+    } else {
+      var array = [];
+      for (var property in locations) {
+        if (locations.hasOwnProperty(property)) {
+          array.push(property);
+        }
+      }
+
+      var oneWeek = 604800;
+      // let the client cache the response for a week
+      res.header('Cache-Control', 'public; max-age=' + oneWeek);
+      res.send(array);
+    }
   };
   
   translink.getLocations(sendResponse);

@@ -1,6 +1,7 @@
 var http = require('http'),
     $ = require('jquery'),
     _ = require('underscore'),
+    request = require('request'),
     Browser = require('zombie'),
     moment = require('moment'),
     locations = undefined,
@@ -8,7 +9,8 @@ var http = require('http'),
     aliases = {
       'Airport Domestic': 'Domestic Airport',
       'Airport International': 'International Airport'
-    };
+    },
+    host = 'mobile.jp.translink.com.au';
 
 /* To Title Case 1.1.1
  * David Gouch <http://individed.com>
@@ -118,58 +120,43 @@ Date.parse = function(other) {
 }  
 
 exports.getLocations = function(callback) {
-  // fetch all the citytrain network locations from the Queensland Rail web site
-  var getLocationsFromTransLink = function(callback) {
-    // get the list of locations from the Queensland Rail web site, because 
-    // the TransLink site doesn't seem to list them (except in PDF timetables)
-    var options = {
-      host: 'www.queenslandrail.com.au',
-      port: 80,
-      path: '/AllStations/Pages/AllStations.aspx',
-      method: 'GET'
-    };
+  // fetch all the citytrain network locations from the TransLink web site
+  var fetchLocations = function(callback) {
+    request.get('http://' + host + '/travel-information/network-information/stops-and-stations/train-stations', function(err, response, body) {
+      if (!err && response.statusCode == 200) {
+        locations = {};
 
-    var request = http.request(options, function(response) {
-      var body = '';
-      response.setEncoding('utf8');
-      
-      // append chunked data to the response body
-      response.on('data', function(data) {
-        body += data;
-      });
-      
-      // parse the response body to build the list of locations
-      response.on('end', function() {
-        // start with an empty array
-        locations = [];
-        
-        $(body).find('select option').each(function() {
-          // there's only one <select> tag on the page, which
-          // are the network locations, build an array from
-          // each one
-          locations.push($(this).attr('value').trim());
+        $(body).find('.content p > a').each(function() {
+          var name = $(this).attr('href').match(new RegExp("/([^/]+)$"))[1].unescape().replace(" station", "").toTitleCase();
+          locations[name] = { href: 'http://' + host + $(this).attr('href'), platforms: [] };
+
+          request(locations[name].href, function(err, response, body) {
+            if (!err && response.statusCode == 200) {
+              $(body).find('.content ul > li > a').each(function() {
+                var pattern = new RegExp("\\d+$");
+                locations[name].platforms.push({ id: $(this).attr('href').match(pattern)[0], name: $(this).text().match(pattern)[0] });
+              });              
+            }
+          });
         });
-        
-        // because the http request/response is asynchronous,
-        // if there's a callback let's call it now passing
-        // the locations
-        if (callback) callback(locations);
-      });
+      } else if (!err) {
+        err = new Error("Unexpected downstream HTTP response: " + JSON.stringify(response));
+      }
+
+      callback(err, locations);
     });
-    request.end();
-    
-    // automatically refresh all the locations from every day
+
     var oneDay = 24 * 60 * 60 * 1000;
-    setInterval(getLocationsFromTransLink, oneDay);
-  };
+    setInterval(fetchLocations, oneDay);
+  }
 
   if (callback) {
     // use the cached locations list if it exists, otherwise
     // fetch them from the web site and cache them for a day
     if (locations) {
-      callback(locations);
+      callback(undefined, locations);
     } else {
-      getLocationsFromTransLink(callback);
+      fetchLocations(callback);
     }
   }
 };
