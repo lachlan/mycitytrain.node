@@ -6,17 +6,17 @@ html
     meta(content='Lachlan Dowding, Kevin Read', name='author')
     meta(content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0', name='viewport')
     meta(content='yes', name='apple-mobile-web-app-capable')
-    link(href='/images/startup-320x460.png', rel='apple-touch-startup-image') 
+    link(href='/images/startup-320x460.png', rel='apple-touch-startup-image')
     link(href='/images/apple-touch-icon-57x57.png', rel='apple-touch-icon')
     link(href='/images/apple-touch-icon-72x72.png', rel='apple-touch-icon', sizes='72x72')
     link(href='/images/apple-touch-icon-114x114.png', rel='apple-touch-icon', sizes='114x114')
-    link(href='/styles/app.css?v=2012-06-04', media='all', rel='stylesheet')
+    link(href='/styles/app.css?v=2012-06-13', media='all', rel='stylesheet')
     script(src='http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js')
     script(src='http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js')
     script(src='http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.3.3/underscore-min.js')
     script(src='http://cdnjs.cloudflare.com/ajax/libs/backbone.js/0.5.1/backbone-min.js')
     script(src='/scripts/jquery.cookie.min.js')
-    script(src='/scripts/app.min.js?v=2012-06-04')
+    script(src='/scripts/app.min.js?v=2012-06-13')
     script(id='header-template', type='text/template')
       | <h1>MyCitytrain</h1>
       | <a id='header-right-button' class='back reverse slideup fx' href='#'>Done</a>
@@ -43,11 +43,11 @@ html
       | <ul class='group'>
       | <% collection.each(function(item, idx) { %>
       |   <% if (idx === index) { %>
-      |     <li class='active'><a href='<%= item.url() %>' class='reverse slide fx'>&#9679;</a></li>          
+      |     <li class='active'><a href='<%= item.url() %>' class='reverse slide fx'>&#9679;</a></li>
       |   <% } else if (idx < index) { %>
-      |     <li><a href='<%= item.url() %>' class='reverse slide fx'>&#9675;</a></li>          
+      |     <li><a href='<%= item.url() %>' class='reverse slide fx'>&#9675;</a></li>
       |   <% } else { %>
-      |     <li><a href='<%= item.url() %>' class='slide fx'>&#9675;</a></li>          
+      |     <li><a href='<%= item.url() %>' class='slide fx'>&#9675;</a></li>
       |   <% } %>
       | <% }); %>
       | </ul>
@@ -55,18 +55,18 @@ html
       |   <a href='#' class='right arrow disabled slide fx'></a>
       | <% } else { %>
       |   <a href='<%= collection.at(index + 1).url() %>' class='right arrow slide fx'></a>
-      | <% } %>    
+      | <% } %>
     script(id='journey-template', type='text/template')
       | <span class='eta <%= className %>'>
       |   <%= eta %>
       | </span>
       | <p class='origin'>
       |   <% if (originPlatform && originPlatform > 0) { %><span class='platform'>P<%= originPlatform %></span><% } %>
-      |   <span class='location'><%= origin %></span> 
+      |   <span class='location'><%= origin %></span>
       |   <span class='time'><%= departure.format().toLowerCase() %></span>
       | </p>
       | <p class='destination'>
-      |   <span class='location'><%= destination %></span> 
+      |   <span class='location'><%= destination %></span>
       |   <% if (destinationPlatform && destinationPlatform > 0) { %><span class='platform'>P<%= destinationPlatform %></span><% } %>
       |   <span class='time'><%= arrival.format().toLowerCase() %></span>
       | </p>
@@ -89,7 +89,7 @@ html
       |           <input type='text' class='origin' placeholder='Origin' value='' />
       |           to
       |           <input type='text' class='destination' placeholder='Destination' value='' />
-      |         </li>              
+      |         </li>
       |       <% } %>
       |     <% } %>
       |   </ol>
@@ -98,8 +98,8 @@ html
       ul
         li
           h2 About
-          p 
-            | MyCitytrain is about taking the Queensland Rail timetable with you on the go. Optimised for mobile devices like the iPhone, it's now easy to check when your next train departs wherever you are. Please add 
+          p
+            | MyCitytrain is about taking the Queensland Rail timetable with you on the go. Optimised for mobile devices like the iPhone, it's now easy to check when your next train departs wherever you are. Please add
             a(href='http://mycitytrain.info') mycitytrain.info
             |  to your home screen.
         li

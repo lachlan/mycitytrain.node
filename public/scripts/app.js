@@ -9,7 +9,7 @@ String.prototype.pluralize = function(count) {
  * 23 May 2008
  * License: http://individed.com/code/to-title-case/license.txt
  *
- * In response to John Gruber's call for a Javascript version of his script: 
+ * In response to John Gruber's call for a Javascript version of his script:
  * http://daringfireball.net/2008/05/title_case
  */
 String.prototype.toTitleCase = function() {
@@ -32,7 +32,7 @@ String.prototype.unescape = function() {
 Date.prototype.duration = function(other, unit) {
   var duration = other.getTime() - this.getTime();
   if (unit == 'seconds') {
-    duration = Math.round(duration/1000); 
+    duration = Math.round(duration/1000);
   } else if (unit == 'minutes') {
     duration = Math.round(duration/(60000));
   } else if (unit == 'words') {
@@ -109,7 +109,7 @@ Date.parse = function(other) {
         , minutes = parseInt(matches[5], 10)
         , seconds = parseInt(matches[6], 10)
         , milliseconds = parseInt(matches[7], 10)
-        
+
       date = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds, milliseconds))
     } else {
       date = Date.__original_parse__(other);
@@ -132,7 +132,7 @@ $(function() {
   $.support.WebKitAnimationEvent = (typeof WebKitTransitionEvent == "object");
   var active = 'active';
   // handle transitions automatically on non-disabled and non-submit links
-  $('body').delegate('a.fx:not(.disabled):not(.submit)', 'click', function() { 
+  $('body').delegate('a.fx:not(.disabled):not(.submit)', 'click', function() {
     $(this).parents('.page').attr('data-fx', $(this).attr('class'));
   });
 
@@ -185,21 +185,21 @@ $(function() {
       });
     });
   };
-  
+
   /** All the application models: location, locations, journey, journeys, favourite, favourites */
   App.Models.Location = Backbone.Model.extend();
-  
+
   App.Models.Locations = Backbone.Collection.extend({
     model: App.Models.Location,
-    url: '/api/locations.json',
-    
+    url: '/api/locations',
+
     parse: function(response) {
       var self = this;
       return _(response).map(function(item) {
         return { name: item };
       });
-    },   
-    
+    },
+
     search: function(term, exact) {
       var pattern = new RegExp('^' + term, 'i'),
           matches = new Array();
@@ -211,10 +211,10 @@ $(function() {
       return matches;
     }
   });
-  
+
   App.Models.Journey = Backbone.Model.extend({
     initialize: function() {
-      this.set({ 
+      this.set({
         departure: Date.parse(this.get('departure')),
         arrival: Date.parse(this.get('arrival')),
         origin: this.get('origin').unescape().toTitleCase(),
@@ -222,12 +222,12 @@ $(function() {
       });
       this.unset('eta');
     },
-    
+
     eta: function(unit) {
       if (_(unit).isUndefined()) unit = 'words';
       return Date.now().duration(this.get('departure'), unit);
     },
-    
+
     className: function() {
       var name = '',
           eta = this.eta('minutes');
@@ -236,10 +236,10 @@ $(function() {
         name = 'now';
       else if (eta <= '10')
         name = 'soon';
-  
+
       return name;
     },
-    
+
     toJSON: function() {
       return _(Backbone.Model.prototype.toJSON.call(this)).extend({
         eta: this.eta(),
@@ -248,21 +248,21 @@ $(function() {
     }
   });
 
-  App.Models.Journeys = Backbone.Collection.extend({ 
+  App.Models.Journeys = Backbone.Collection.extend({
     model: App.Models.Journey,
-    limit: 1,
-  
+    limit: 5,
+
     initialize: function(models, options) {
       _(this).bindAll();
-      _(this).extend({ 
+      _(this).extend({
         origin: options.origin,
         destination: options.destination,
         inverse: options.inverse
       });
-    
+
       if (_.isUndefined(this.inverse)) {
         _(this).extend({
-          inverse: new App.Models.Journeys([], { 
+          inverse: new App.Models.Journeys([], {
             origin: this.destination,
             destination: this.origin,
             inverse: this
@@ -270,46 +270,46 @@ $(function() {
         });
       }
     },
-    
+
     url: function(limit) {
       if (_(limit).isUndefined()) limit = this.limit;
-      return ('/api/' + this.origin.escape() + '/' + this.destination.escape() + '.json?limit=' + limit).toLowerCase();
+      return ('/api/' + this.origin.escape() + '/' + this.destination.escape() + '?limit=' + limit).toLowerCase();
     },
-    
+
     parse: function(response) {
       var self = this;
       return _(response).map(function(row) {
-        return { 
+        return {
           origin: self.origin,
-          originPlatform: row.origin.platform,
+          originPlatform: row[0],
           destination: self.destination,
-          destinationPlatform: row.destination.platform,
-          departure: row.origin.datetime,
-          arrival: row.destination.datetime
+          destinationPlatform: row[2],
+          departure: new Date(row[1] * 60 * 1000),
+          arrival: new Date(row[3] * 60 * 1000)
         }
       });
     },
-    
+
     next: function(callback, limit) {
       var self = this,
-          journeys = new App.Models.Journeys([], { 
+          journeys = new App.Models.Journeys([], {
             origin: self.origin,
-            destination: self.destination 
+            destination: self.destination
           });
 
-      journeys.url = self.url(limit);  
+      journeys.url = self.url(limit);
       if (self.length > 0) journeys.url += '&after=' + JSON.stringify(self.last().get('departure')).escape();
-  
+
       journeys.fetch({ success: function() {
         self.add(journeys.toJSON());
         if (_(callback).isFunction()) callback();
       }});
     },
-    
+
     remove: function(models, options) {
       Backbone.Collection.prototype.remove.call(this, models, options);
     },
-    
+
     expire: function(callback) {
       var self = this;
       if (this.length === 0) {
@@ -322,13 +322,13 @@ $(function() {
           if (journey.get('departure') <= (new Date(Date.now().getTime() + 59 * 1000))) self.remove(journey);
         });
         // after removing some services, automatically refresh the collection if its below its limit
-        if (this.length < this.limit) 
+        if (this.length < this.limit)
           this.next(callback, this.limit - this.length);
         else if (_(callback).isFunction())
           callback();
       }
     },
-    
+
     comparator: function(service) {
       return service.get('departure');
     }
@@ -338,7 +338,7 @@ $(function() {
     initialize: function(attributes) {
       var self = this;
       self.journeys = new App.Models.Journeys([], { origin: self.get('origin'), destination: self.get('destination') });
-      
+
       if (attributes.inverse) {
         self.unset('inverse');
         self.inverse = attributes.inverse;
@@ -350,77 +350,77 @@ $(function() {
         });
       }
     },
-    
+
     url: function(hash) {
       if (_(hash).isUndefined()) hash = true;;
       var prefix = hash ? '/#' : '';
       return prefix + '/' + (this.get('origin') + '/' + this.get('destination')).escape().toLowerCase();
     },
-    
+
     expire: function() {
       this.journeys.expire();
       this.inverse.journeys.expire();
     }
   });
 
-  App.Models.Favourites = Backbone.Collection.extend({ 
+  App.Models.Favourites = Backbone.Collection.extend({
     model: App.Models.Favourite,
     _cookie: 'favourites',
-  
+
     inverse: function() {
       return new App.Models.Favourites(this.map(function(item) {
         return item.inverse;
       }));
     },
-    
+
     save: function() {
       $.cookie(this._cookie, JSON.stringify(this), { expires: 7 * 52 * 25 });
     },
-    
+
     fetch: function() {
       var json = $.cookie(this._cookie);
       if (_(json).isString() && !_(json).isEmpty()) {
         var array = JSON.parse(json);
-      
-        if (_(array).isArray()) {          
+
+        if (_(array).isArray()) {
           array = _(array).select(function(item) {
             return _(item).isArray() && _(item[0]).isString() && _(item[1]).isString() && !_(item[0]).isEmpty() && !_(item[1]).isEmpty();
           });
-        
+
           this.reset(_(array).map(function(item) {
-            return { 
+            return {
               origin: item[0],
-              destination: item[1] 
+              destination: item[1]
             }
           }));
         }
       }
     },
-    
+
     toJSON: function() {
       return this.map(function(model) {
         return [model.get('origin'), model.get('destination')];
       });
     },
-    
+
     expire: function() {
       this.each(function(favourite) {
         favourite.expire();
       });
-    } 
+    }
   });
-  
+
   /** All the application views: journey, journeys, page, about, settings, favourite, favourites */
   App.Views.Journey = Backbone.View.extend({
     tagName: 'li',
     className: 'journey',
     template: _.template($('#journey-template').html()),
-  
+
     initialize: function() {
       _(this).bindAll('render');
       this.model.bind('change', this.render);
     },
-    
+
     render: function() {
       $(this.el).html(this.template(this.model.toJSON()));
       return this;
@@ -429,14 +429,14 @@ $(function() {
 
   App.Views.Journeys = Backbone.View.extend({
     tagName: 'ol',
-    
+
     initialize: function() {
       _(this).bindAll('render', 'add', 'remove');
       this.collection.bind('reset', this.render);
       this.collection.bind('add', this.add);
       this.collection.bind('remove', this.remove);
     },
-    
+
     render: function() {
       $(this.el).empty();
       var self = this;
@@ -445,16 +445,16 @@ $(function() {
       });
       return self;
     },
-    
-    add: function(item, reveal) {      
+
+    add: function(item, reveal) {
       if (!_(reveal).isBoolean()) reveal = true;
-    
+
       var html = $((new App.Views.Journey({ model: item, id: item.cid })).render().el);
       if (reveal) html.hide();
       $(this.el).append(html);
       if (reveal) html.slideDown();
     },
-    
+
     remove: function(item) {
       flash($(this.el).find('#' + item.cid));
     }
@@ -463,7 +463,7 @@ $(function() {
   App.Views.Page = Backbone.View.extend({
     tagName: 'div',
     className: 'page',
-    
+
     initialize: function() {
       _(this).bindAll('render');
       if (!_(this.collection).isUndefined()) {
@@ -472,7 +472,7 @@ $(function() {
         this.collection.bind('remove', this.render);
       }
     },
-    
+
     render: function() {
       var header = $('<div id="header"></div>').html(this.header()),
           content = $('<div id="content"></div>').html(this.content()),
@@ -482,15 +482,15 @@ $(function() {
 
       return this;
     },
-    
+
     header: function() {
       return _.template($('#header-template').html());
     },
-    
+
     content: function() {
       return $('');
     },
-    
+
     footer: function() {
       return _.template($('#footer-template').html());
     }
@@ -498,64 +498,64 @@ $(function() {
 
   App.Views.About = App.Views.Page.extend({
     id: 'about',
-    
+
     events: {
        'click #header-right-button': 'done'
     },
-    
+
     header: function() {
        return _.template($('#header-template').html());
     },
-    
+
     content: function() {
        return _.template($('#about-template').html());
     },
-    
+
     footer: function() {
        return $('');
     },
-    
+
     done: function(e) {
        history.back();
        e.preventDefault();
     }
   });
-  
+
   App.Views.Settings = App.Views.Page.extend({
     id: 'settings',
-    
+
     events: {
       'click #header-right-button': 'done'
     },
-    
+
     header: function() {
       return _.template($('#header-template').html());
     },
-    
+
     content: function() {
       return _.template($('#settings-template').html(), { collection: this.collection.toJSON() });
     },
-    
+
     footer: function() {
       return $('');
     },
-    
+
     done: function(e) {
       // save changes!
       var self = this,
           changed = false,
           models = [],
           count = 0;
-      
+
       self.$('form li').each(function() {
         var origin = $.trim($(this).find('input.origin').attr('value').toTitleCase()),
             destination = $.trim($(this).find('input.destination').attr('value').toTitleCase());
-        
+
         if (!_(origin).isEmpty() && !_(destination).isEmpty()) {
           var favourite = self.collection.find(function(item) {
             return _(origin).isEqual(item.get('origin')) && _(destination).isEqual(item.get('destination'));
           });
-        
+
           if (_(favourite).isUndefined()) {
             changed = true;
             models.push(new App.Models.Favourite({ origin: origin, destination: destination }));
@@ -573,31 +573,31 @@ $(function() {
       e.preventDefault();
     }
   });
-  
+
   App.Views.Favourite = App.Views.Page.extend({
     events: {
         'click button': 'load'
     },
-    
+
     initialize: function(options) {
       _(this).bindAll('header', 'footer', 'content', 'load');
       this.partial = new App.Views.Journeys({ collection: this.model.journeys });
       this.inverse = false || options.inverse;
     },
-    
+
     header: function() {
       return _.template($('#journey-header-template').html(), { url: this.model.inverse.url(), inverse: this.inverse });
     },
-    
+
     content: function() {
       return $('<div class="journeys"></div>').append(this.partial.render().el).append(_.template($('#load-template').html())());
     },
-    
+
     load: function() {
       var finished = false,
           button = this.$('button'),
           expire = button.attr('disabled', 'disabled').hasClass('expire-only');
-      
+
       var animateLoader = function(element, isFinished) {
         var element = $(element),
             className = 'transparent',
@@ -605,7 +605,7 @@ $(function() {
             finished = isFinished;
 
         if (_.isFunction(isFinished)) finished = isFinished();
-        
+
         if (finished) {
           elements.removeClass(className);
         } else {
@@ -618,12 +618,12 @@ $(function() {
           window.setTimeout(function() { animateLoader(element, isFinished) }, 250);
         }
       };
-      
+
       // animate the loading button, but only after 250 ms has passed in case action is super quick
       window.setTimeout(function() {
         animateLoader(button, function() { return finished });
       }, 250);
-      
+
       if (expire) {
         this.model.journeys.expire(function() {
           button.removeClass('expire-only').removeAttr('disabled');
@@ -636,7 +636,7 @@ $(function() {
         });
       }
     },
-    
+
     footer: function() {
       return _.template($('#footer-template').html(), { collection: this.collection, index: this.collection.indexOf(this.model) });
     }
@@ -645,18 +645,18 @@ $(function() {
   App.Views.Favourites = Backbone.View.extend({
     tagName: 'div',
     id: 'favourites',
-    
+
     initialize: function(options) {
       _(this).bindAll('render');
       this.collection.bind('reset', this.render);
       this.collection.bind('add', this.render);
       this.collection.bind('remove', this.render);
     },
-    
+
     render: function() {
       var self = this,
           partials = this.partials();
-        
+
       $(self.el).empty();
       _(partials).each(function(partial) {
         $(self.el).append(partial.render().el);
@@ -666,33 +666,33 @@ $(function() {
       $('button:not(.disabled)').addClass('expire-only').click();
       return self;
     },
-    
+
     partials: function() {
       var self = this,
           list = undefined;
-        
+
       list = self.collection.map(function(item) {
         return new App.Views.Favourite({ model: item, id: item.cid, collection: self.collection });
       });
       list = list.concat(self.collection.inverse().map(function(item) {
         return new App.Views.Favourite({ model: item, id: item.cid, collection: self.collection.inverse(), inverse: true });
       }));
-    
+
       return list;
     }
   });
-  
+
   /** All the application controllers: about, settings, journey */
   App.Routers.About = Backbone.Router.extend({
     routes: {
       '/about': 'about'
     },
-    
+
     initialize: function(options) {
       this.view = new App.Views.About();
       $('body').append(this.view.render().el);
     },
-    
+
     about: function() {
       transition('#' + this.view.id);
     }
@@ -702,40 +702,40 @@ $(function() {
     routes: {
       '/settings': 'settings'
     },
-    
+
     initialize: function(options) {
       this.locations = options.locations;
       this.view = new App.Views.Settings({ collection: options.collection });
       $('body').append(this.view.render().el);
     },
-    
+
     settings: function() {
       if (this.locations.length === 0) this.locations.fetch();
       transition('#' + this.view.id);
     }
   });
 
-  App.Routers.Journey = Backbone.Router.extend({  
+  App.Routers.Journey = Backbone.Router.extend({
     routes: {
       '': 'root',
       '/': 'root',
       '/:origin/:destination': 'journey'
     },
-    
+
     initialize: function(options) {
       this.collection = options.collection;
       this.view = new App.Views.Favourites({ collection: this.collection });
-    
+
       // pre-render the element on the page, it won't be displayed until a journey url is accessed
       var element = this.view.render().el;
       $('body').append(element);
     },
-    
+
     root: function() {
       // redirect to first favourite in list, or redirect to settings when no favourites exist
       window.location.hash = (this.collection.length > 0) ? this.collection.first().url(false) : '/settings';
     },
-    
+
     journey: function(origin, destination) {
       origin = origin.unescape().toTitleCase();
       destination = destination.unescape().toTitleCase();
@@ -743,7 +743,7 @@ $(function() {
             return _(origin).isEqual(item.get('origin')) && _(destination).isEqual(item.get('destination'));
           },
           item = this.collection.find(match) || this.collection.inverse().find(match);
-      
+
       if (_(item).isUndefined()) {
         // if the journey isn't already a favourite, add it to the favourites automatically and then display it
         if (this.collection.length < 7) {
@@ -759,11 +759,11 @@ $(function() {
       }
     }
   });
-  
+
   _(App).extend({
     favourites: new App.Models.Favourites(),
     locations: new App.Models.Locations(),
-  
+
     initialize: function() {
       this.favourites.fetch();
 
@@ -789,7 +789,7 @@ $(function() {
       run();
     }
   });
-  
+
   /** start the app */
   App.initialize();
 });

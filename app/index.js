@@ -1,5 +1,11 @@
-var translink = require('./translink');
+// monkey patch some prototype extensions
+require('./extensions');
 
+// libraries
+var translink = require('./translink')
+  , moment = require('moment');
+
+// exports
 exports.index = function(req, res, next) {
   res.render('index', {
     title: 'MyCitytrain'
@@ -7,9 +13,9 @@ exports.index = function(req, res, next) {
 };
 
 exports.locations = function(req, res, next) {
-  var sendResponse = function(error, locations) {
-    if (error) {
-      res.send(500, error); // something went wrong :-(    
+  var sendResponse = function(err, locations) {
+    if (err) {
+      res.send(500, err); // something went wrong :-(
     } else {
       var array = [];
       for (var property in locations) {
@@ -24,43 +30,29 @@ exports.locations = function(req, res, next) {
       res.send(array);
     }
   };
-  
-  translink.getLocations(sendResponse);
+
+  translink.locations(sendResponse);
 };
 
-exports.journeys = function(req, res, next, callback) {
-  var departDate = undefined,
-      limit = undefined,
+exports.journeys = function(req, res, next) {
+  var after, limit,
       origin = req.params.origin.unescape().toTitleCase(),
       destination = req.params.destination.unescape().toTitleCase();
 
-  if (req.query.after) departDate = Date.parse(req.query.after);
-  
-  if (!callback) {
-    callback = function(err, journeys) {
-      if (err) {
-        res.send(500, err); // something went wrong :-(    
-      } else {
-        res.send(journeys);
-      }
-    };
-  }
+  if (req.query.after) after = moment(JSON.parse(req.query.after));
+  if (req.query.limit) limit = parseInt(req.query.limit, 10);
 
-  translink.getJourneys(origin, destination, departDate, callback);
-};
-
-exports.journeys_DEPRECATED = function(req, res, next) {
-  var callback = function(err, journeys) {
+  var sendResponse = function(err, journeys) {
     if (err) {
-      res.send(500, err); // something went wrong :-(    
+      res.send(500, err); // something went wrong :-(
     } else {
-      var old = [];
-      for(var i = 0; i < journeys.length; i++) {
-        old.push([journeys[i].origin.datetime, journeys[i].destination.datetime]);
-      }
-      res.send(old);
+      res.send(journeys);
     }
   };
 
-  exports.journeys(req, res, callback);
+  translink.journeys(origin, destination, after, limit, sendResponse);
 };
+
+exports.boot = function() {
+  translink.boot();
+}

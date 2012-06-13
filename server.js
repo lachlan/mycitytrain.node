@@ -1,6 +1,6 @@
 var express = require('express'),
     app = require('./app'),
-    mime = require('mime'), 
+    mime = require('mime'),
     server = module.exports = express.createServer();
 
 // configuration
@@ -29,10 +29,12 @@ server.configure('production', function() {
 
 // routes
 server.get('/', app.index);
-server.get('/api/locations.json', app.locations);
-server.get('/api/:origin/:destination.json', app.journeys);
+server.get('/api/locations', app.locations);
+server.get('/api/:origin/:destination', app.journeys);
 
 // boot the app
+app.boot();
+
 if (!module.parent) {
   server.listen(process.env.PORT || 3000);
   console.log("Express server listening on port %d", server.address().port);
