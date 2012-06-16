@@ -167,9 +167,9 @@ var getJourneys = function(locations, origin, destination, after, limit, callbac
     }
 
     if (journeys.length < limit) {
-      console.log("TransLink: #### Try next day because journeys.length " + journeys.length + " < limit " + limit);
       // if we didn't find enough journeys, try the next day
       var date = parseTranslinkTime(moment(after).sod().add('days', 1), '0:00am');
+      console.log("TransLink: Try journeys after " + date.format() + " because journeys.length " + journeys.length + " < limit " + limit);
       getJourneys(locations, origin, destination, date, limit - journeys.length, function(error, result) {
         returnResults(error, journeys.concat(result))
       });
@@ -209,7 +209,7 @@ var getJourneys = function(locations, origin, destination, after, limit, callbac
 
 var processJourneys = function(task, callback) {
   request.get({ url: task.href, timeout: $timeout }, function(err, response, body) {
-    console.log("TransLink: searching for journeys from " + task.origin.station + "#" + task.origin.platform.name + " to " + task.destination.station + "#" + task.destination.platform.name + " departing after " + task.after.format("YYYY-MM-DD HH:mm"));
+    console.log("TransLink: searching for journeys from " + task.origin.station + "#" + task.origin.platform.name + " to " + task.destination.station + "#" + task.destination.platform.name + " departing after " + task.after.format());
     if (!err && response.statusCode == 200) {
 
       $(body).find('.content-table tbody tr').each(function(index) {
@@ -229,7 +229,7 @@ var processJourneys = function(task, callback) {
             arrive = parseTranslinkTime(moment(task.after).add('days', 1), arrive_td);
           }
 
-          console.log("TransLink: journey found " + task.origin.station + "#" + task.origin.platform.name + " " + depart.format("YYYY-MM-DD HH:mm") + " to " + task.destination.station + "#" + task.destination.platform.name  + " " + arrive.format("YYYY-MM-DD HH:mm"));
+          console.log("TransLink: journey found " + task.origin.station + "#" + task.origin.platform.name + " " + depart.format() + " to " + task.destination.station + "#" + task.destination.platform.name  + " " + arrive.format());
 
           if (depart.toDate() > task.after.toDate()) {
             // smallest on-the-wire representation of a journey
