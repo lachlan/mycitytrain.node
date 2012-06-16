@@ -169,7 +169,7 @@ var getJourneys = function(locations, origin, destination, after, limit, callbac
     if (journeys.length < limit) {
       console.log("TransLink: #### Try next day because journeys.length " + journeys.length + " < limit " + limit);
       // if we didn't find enough journeys, try the next day
-      var date = moment(after).add('days', 1).sod();
+      var date = parseTranslinkTime(moment(after).sod().add('days', 1), '0:00am');
       getJourneys(locations, origin, destination, date, limit - journeys.length, function(error, result) {
         returnResults(error, journeys.concat(result))
       });
