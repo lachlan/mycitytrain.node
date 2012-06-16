@@ -58,7 +58,7 @@ var cacheLocations = function(callback) {
 
   // keep the locations up to date by fetching them again tomorrow
   var oneDay = 24 * 60 * 60 * 1000;
-  setInterval(cacheLocations, oneDay);
+  setTimeout(cacheLocations, oneDay);
 }
 
 var getLocations = function(callback) {
