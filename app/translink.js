@@ -107,7 +107,7 @@ var processLocations = function(body, callback) {
       });
 
       res.on('end', function() {
-        console.log("TransLink: fetching platforms for " + name)
+        console.log("TransLink: fetching platforms for " + name);
         processPlatforms(body, locations[name].platforms, callback);
       });
     });
@@ -131,10 +131,14 @@ var processLocations = function(body, callback) {
 var processPlatforms = function(body, platforms, callback) {
   $(body).find('.content ul > li > a').each(function() {
     var pattern = new RegExp("\\d+$");
-    platforms.push({
-      id: $(this).attr('href').match(pattern)[0],
-      name: $(this).text().match(pattern)[0]
-    });
+    var text = $(this).text();
+    var href = $(this).attr('href');
+    if (href.match(pattern) && text.match(pattern)) {
+      platforms.push({
+        id: href.match(pattern)[0],
+        name: text.match(pattern)[0]
+      });
+    }
   });
   callback();
 }
