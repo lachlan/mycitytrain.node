@@ -217,8 +217,8 @@ var processJourneys = function(task, callback) {
     if (!err && response.statusCode == 200) {
 
       $(body).find('.content-table tbody tr').each(function(index) {
-        var depart_td = $(this).find('td').eq(0).text().trim();
-        var arrive_td = $(this).find('td').eq(1).text().trim();
+        var depart_td = $(this).find('td').eq(1).text().trim();
+        var arrive_td = $(this).find('td').eq(2).text().trim();
 
         var tomorrow = moment(task.after).add('days', 1).format('dddd');
         var depart, arrive;
