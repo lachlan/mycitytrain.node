@@ -46,7 +46,7 @@ exports.journeys = function(origin, destination, after, limit, callback) {
 }
 
 exports.boot = function() {
-  //cacheLocations();
+  cacheLocations();
 }
 
 // private functions
