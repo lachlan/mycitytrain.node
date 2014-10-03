@@ -46,7 +46,7 @@ exports.journeys = function(origin, destination, after, limit, callback) {
 }
 
 exports.boot = function() {
-  cacheLocations();
+  //cacheLocations();
 }
 
 // private functions
@@ -144,7 +144,7 @@ var processPlatforms = function(body, platforms, callback) {
 }
 
 var parseTranslinkTime = function(date, time) {
-  return moment(moment(date).utc().add("hours", $timezone).format('YYYY-MM-DD') + ' ' + time + ' +10:00', 'YYYY-MM-DD h:mma Z');
+  return moment(moment(date).utc().add("hours", $timezone).format('YYYY-MM-DD') + ' ' + time + ' +10:00', 'YYYY-MM-DD h.mma Z');
 }
 
 var getJourneys = function(locations, origin, destination, after, limit, callback) {
